@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PISD6 App 00003</title>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+        body { font-family: sans-serif; background: #f5f5f5; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        .btn { background: #00B900; color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; margin-top: 15px; cursor: pointer; }
+        .status-box { margin-top: 20px; padding: 15px; border-radius: 8px; background: #e9ecef; font-size: 14px; text-align: left; display: none; }
+        .error-text { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>PISD6 Portal</h2>
+        <p id="loadingText">Loading LIFF Data...</p>
+        <img id="profileImage" style="width:100px; height:100px; border-radius:50%; display:none; margin-bottom:15px;">
+        <h3 id="displayName"></h3>
+        <p id="userIdDisplay" style="font-size:12px; color:#777;"></p>
+        <button id="btnEnterApp" class="btn" style="display:none;">เข้าสู่ระบบ PISD6</button>
+        <div id="statusBox" class="status-box"></div>
+    </div>
+    <script>
+        window.onerror = function(m, u, l){ document.getElementById("statusBox").style.display="block"; document.getElementById("statusBox").innerHTML='Err: '+m; return false; };
+        (function(){
+            const CONFIG = { LIFF_ID: "2009416313-HqTDFq45", GAS_URL: "https://script.google.com/macros/s/AKfycbwyI-KJlJzK1kKLkArN5aTgI5mefFJWbNXxvFG8jC011zn49lNAIkmm6BY1FMWYHuP6/exec", APP_CODE: "app_00003" };
+            const Api = {
+                async call(action, data){
+                    const res = await fetch(CONFIG.GAS_URL, { method:"POST", body:JSON.stringify({action, payload:data}) });
+                    return await res.json();
+                }
+            };
+            const UI = {
+                show(txt, err=false){ const b=document.getElementById("statusBox"); b.style.display="block"; b.innerHTML=err?`<span class="error-text">${txt}</span>`:txt; }
+            };
+            let uid = "";
+            async function init(){
+                UI.show("Loading...");
+                try {
+                    const to = new Promise((_, r)=>setTimeout(()=>r(new Error("Timeout")), 10000));
+                    await Promise.race([liff.init({liffId: CONFIG.LIFF_ID}), to]);
+                    if(liff.isLoggedIn()){
+                        const p = await liff.getProfile(); uid = p.userId;
+                        document.getElementById("loadingText").style.display="none";
+                        document.getElementById("displayName").innerText = "สวัสดี, " + p.displayName;
+                        const res1 = await Api.call("liff_auth", {lineUserId:uid});
+                        if(res1.status===200){
+                            UI.show(`Checking app [${CONFIG.APP_CODE}]...`);
+                            const res2 = await Api.call("sso_auth", {lineUserId:uid, appCode:CONFIG.APP_CODE});
+                            if(res2.status===200){ UI.show(`✅ Ready: ${res2.data.firstName}`); }
+                            else { UI.show("❌ No Access: "+res2.message, true); }
+                        } else { UI.show("❌ Inactive: "+res1.message, true); }
+                    } else { liff.login(); }
+                } catch(e){ UI.show("Error: "+e.message, true); }
+            }
+            document.addEventListener("DOMContentLoaded", init);
+        })();
+    </script>
+</body>
+</html>
