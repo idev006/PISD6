@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PISD6 App 00001</title>
+    <!-- Include LINE LIFF SDK -->
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        h2 {
+            color: #00B900;
+            /* LINE Green */
+            margin-bottom: 5px;
+        }
+
+        .profile-img {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin-bottom: 15px;
+            display: none;
+            object-fit: cover;
+            border: 2px solid #ddd;
+        }
+
+        .btn {
+            background-color: #00B900;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 15px;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #009900;
+        }
+
+        .btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .status-box {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #e9ecef;
+            font-size: 14px;
+            text-align: left;
+            word-break: break-all;
+            display: none;
+        }
+
+        .error-text {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        .success-text {
+            color: #28a745;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h2>PISD6 Portal</h2>
+        <p id="loadingText">Loading LIFF Data...</p>
+
+        <img id="profileImage" class="profile-img" src="" alt="Profile Image">
+        <h3 id="displayName"></h3>
+        <p id="userIdDisplay" style="font-size: 12px; color: #777;"></p>
+
+        <button id="btnEnterApp" class="btn" style="display: none;">เข้าสู่ระบบ PISD6 (SSO Auth)</button>
+
+        <div id="statusBox" class="status-box"></div>
+    </div>
+
+    <script>
+        // ย้าย Global Error Handler มาไว้นอกสุดและบนสุด เพื่อดักจับ Error ได้เร็วที่สุด
+        window.onerror = function (msg, url, lineNo, columnNo, error) {
+            var statusBox = document.getElementById("statusBox");
+            if (statusBox) {
+                statusBox.style.display = "block";
+                statusBox.innerHTML = '<div class="error-text"><b>[Global Error]:</b> ' + msg + '<br><small>Line: ' + lineNo + '</small></div>';
+            }
+            return false;
+        };
+
+        (function () {
+            console.log("Script execution started");
+            // ==========================================
+            // ⚙️ การตั้งค่า (Configuration)
+            // ==========================================
+            const CONFIG = {
+                LIFF_ID: "2009416313-HqTDFq45", // <--- แก้ไขตาม LIFF ID ของแอปนี้
+                GAS_WEBAPP_URL: "https://script.google.com/macros/s/AKfycbwyI-KJlJzK1kKLkArN5aTgI5mefFJWbNXxvFG8jC011zn49lNAIkmm6BY1FMWYHuP6/exec",
+                APP_CODE: "app_00001" // <--- แก้ไขตาม App Code ที่ต้องการ
+            };
+            // ==========================================
+
+            /**
+             * API Stub (Service Layer ฝั่ง Client)
+             */
+            const ApiStub = {
+                async sendRequest(action, payloadData) {
+                    const payload = {
+                        action: action,
+                        payload: payloadData
+                    };
+
+                    try {
+                        const response = await fetch(CONFIG.GAS_WEBAPP_URL, {
+                            method: "POST",
+                            body: JSON.stringify(payload),
+                            headers: { "Content-Type": "text/plain;charset=utf-8" }
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP Error! Status: ${response.status}`);
+                        }
+
+                        return await response.json();
+                    } catch (error) {
+                        console.error("API Stub Error:", error);
+                        throw error;
+                    }
+                },
+
+                async authLiff(lineUserId) {
+                    return this.sendRequest("liff_auth", { lineUserId: lineUserId });
+                },
+
+                async authSso(lineUserId, appCode) {
+                    return this.sendRequest("sso_auth", {
+                        lineUserId: lineUserId,
+                        appCode: appCode
+                    });
+                }
+            };
+
+            /**
+             * แถบแสดงผล UI (UI Controller)
+             */
+            const ViewController = {
+                elements: {
+                    profileImage: document.getElementById("profileImage"),
+                    displayName: document.getElementById("displayName"),
+                    userIdDisplay: document.getElementById("userIdDisplay"),
+                    btnEnterApp: document.getElementById("btnEnterApp"),
+                    statusBox: document.getElementById("statusBox"),
+                    loadingText: document.getElementById("loadingText")
+                },
+
+                init() {
+                    if (CONFIG.LIFF_ID === "YOUR_LIFF_ID_HERE" || !CONFIG.LIFF_ID) {
+                        this.showStatus("กรุณาใส่ LIFF ID ในโค้ดก่อน!", true);
+                        return false;
+                    }
+                    return true;
+                },
+
+                displayProfile(profile) {
+                    this.elements.loadingText.style.display = "none";
+
+                    if (profile.pictureUrl) {
+                        this.elements.profileImage.src = profile.pictureUrl;
+                        this.elements.profileImage.style.display = "inline-block";
+                    }
+
+                    this.elements.displayName.innerText = "สวัสดี, " + profile.displayName;
+                    this.elements.userIdDisplay.innerText = profile.userId;
+                },
+
+                showStatus(text, isError = false) {
+                    this.elements.statusBox.style.display = "block";
+                    if (isError) {
+                        this.elements.statusBox.innerHTML = `<span class="error-text">${text}</span>`;
+                    } else {
+                        this.elements.statusBox.innerHTML = text;
+                    }
+                },
+
+                setupButton(text, isEnabled, onClickCallback) {
+                    this.elements.btnEnterApp.innerText = text;
+                    this.elements.btnEnterApp.disabled = !isEnabled;
+                    this.elements.btnEnterApp.style.display = "block";
+                    if (onClickCallback) {
+                        this.elements.btnEnterApp.onclick = onClickCallback;
+                    }
+                }
+            };
+
+            /**
+             * ตัวควบคุมการทำงานหลัก (App logic)
+             */
+            let currentUserId = "";
+
+            async function initializeLiff() {
+                ViewController.showStatus("กำลังโหลดหน้าเว็บ...", false);
+
+                if (typeof liff === 'undefined') {
+                    ViewController.showStatus("❌ ไม่สามารถโหลด LINE SDK ได้ (liff is undefined)", true);
+                    return;
+                }
+
+                if (!ViewController.init()) return;
+
+                try {
+                    ViewController.showStatus("กำลังเริ่มต้น LINE SDK (liff.init)...");
+
+                    // สร้าง Timeout 10 วินาที เพื่อป้องกันการค้าง
+                    const timeoutPromise = new Promise((_, reject) =>
+                        setTimeout(() => reject(new Error("LIFF Init Timeout (10s) - SDK อาจจะไม่ตอบสนอง")), 10000)
+                    );
+
+                    await Promise.race([
+                        liff.init({ liffId: CONFIG.LIFF_ID }),
+                        timeoutPromise
+                    ]);
+
+                    ViewController.showStatus("LINE SDK พร้อมทำงานแล้ว");
+
+                    if (liff.isLoggedIn()) {
+                        ViewController.showStatus("กำลังดึงข้อมูลโปรไฟล์...");
+                        const profile = await liff.getProfile();
+                        ViewController.displayProfile(profile);
+                        currentUserId = profile.userId;
+
+                        // ขั้นตอนที่ 1: ตรวจสอบสถานะบุคคล (Account Check)
+                        await handleLiffAuth();
+                    } else {
+                        if (liff.isInClient()) {
+                            ViewController.showStatus("กำลังพยายามเข้าสู่ระบบ LINE...", false);
+                            liff.login();
+                        } else {
+                            ViewController.showStatus("⚠️ กรุณาเปิดแอปนี้ผ่านแอปพลิเคชัน LINE เท่านั้น หรือทำการ Login ด้วย LINE Account", true);
+                            ViewController.setupButton("Login ด้วย LINE (ทดสอบบนคอม)", true, () => liff.login());
+                        }
+                    }
+                } catch (err) {
+                    console.error("LIFF Initialization failed", err);
+
+                    const currentUrl = window.location.href;
+                    const errorMsg = `
+                        ❌ LIFF Init Error: ไม่สามารถเริ่มต้น LIFF ได้<br>
+                        <small>(${err.code || 'UNKNOWN'}): ${err.message}</small><br>
+                        <hr style="border: 0; border-top: 1px dotted #ccc; margin: 10px 0;">
+                        <div style="text-align: left; font-size: 12px; color: #666;">
+                            <b>Current URL:</b><br>
+                            <span style="word-break: break-all;">${currentUrl}</span><br><br>
+                            <b>💡 วิธีแก้:</b> โปรดก๊อปปี้ URL ด้านบนไปวางในช่อง <b>"Endpoint URL"</b> ใน LINE Developers Console (เมนู LIFF) ให้ตรงกันทุกตัวอักษรครับ
+                        </div>
+                    `;
+
+                    ViewController.showStatus(errorMsg, true);
+                    ViewController.elements.loadingText.style.display = "none";
+                    ViewController.setupButton("ลองโหลดใหม่อีกครั้ง", true, () => window.location.reload());
+                }
+            }
+
+            // ขั้นตอนที่ 1: ตรวจสอบสถานะบุคคล (Account/Activation)
+            async function handleLiffAuth() {
+                ViewController.showStatus("ขั้นตอนที่ 1: กำลังตรวจสอบสถานะบัญชี...");
+
+                try {
+                    const result = await ApiStub.authLiff(currentUserId);
+
+                    if (result.status === 200) {
+                        await handleSsoAuth(CONFIG.APP_CODE);
+                    } else {
+                        const errorHtml = `
+                            <div style="margin-top: 10px;">
+                                <div class="error-text" style="font-size: 16px; margin-bottom: 8px;">❌ บัญชีไม่พร้อมใช้งาน</div>
+                                <div><b>สถานะ:</b> ${result.message}</div>
+                                <hr style="border: 0; border-top: 1px solid #ccc; margin: 12px 0;">
+                                <div style="color: #666; font-size: 13px;">
+                                    <b>💡 ข้อแนะนำ:</b><br>
+                                    1. หากคุณยังไม่ได้ยืนยันตัวตน โปรดพิมพ์ <b>activate:รหัสยืนยัน</b> ในช่องแชท LINE<br>
+                                    2. หากบัญชีถูกระงับ หรือหมดอายุ โปรดติดต่อฝ่ายบุคคลหรือผู้ดูแลระบบ<br>
+                                    3. ตรวจสอบว่าคุณใช้ LINE Account ที่ลงทะเบียนไว้หรือไม่
+                                </div>
+                            </div>
+                        `;
+                        ViewController.showStatus(errorHtml, true);
+                        ViewController.elements.btnEnterApp.style.display = "none";
+                    }
+                } catch (error) {
+                    ViewController.showStatus(`<span class="error-text">Network Error (Step 1):</span> ${error.message}`, true);
+                }
+            }
+
+            // ขั้นตอนที่ 2: ตรวจสอบสิทธิ์การเข้าใช้งานแอป (App Authorization)
+            async function handleSsoAuth(appCode) {
+                ViewController.showStatus(`ขั้นตอนที่ 2: กำลังตรวจสอบสิทธิ์เข้าถึงแอป [${appCode}]...`);
+
+                try {
+                    const result = await ApiStub.authSso(currentUserId, appCode);
+
+                    if (result.status === 200) {
+                        const successHtml = `
+                            <div style="margin-top: 10px; text-align: center;">
+                                <h3 style="color: #00B900; margin-bottom: 5px;">✅ แอปพร้อมใช้งาน</h3>
+                                <p style="margin-top: 5px;">ยินดีต้อนรับ คุณ ${result.data.firstName} (รหัส: ${result.data.employeeNo})</p>
+                            </div>
+                        `;
+                        ViewController.showStatus(successHtml);
+                        ViewController.elements.btnEnterApp.style.display = "none";
+                        
+                        // 🚀 TODO: แสดงเนื้อหาแอปหลักที่นี่
+                    } else {
+                        const errorHtml = `
+                            <div style="margin-top: 10px;">
+                                <div class="error-text" style="font-size: 16px; margin-bottom: 8px;">❌ ไม่มีสิทธิ์ใช้งานแอปนี้</div>
+                                <div><b>สาเหตุ:</b> ${result.message}</div>
+                                <hr style="border: 0; border-top: 1px solid #ccc; margin: 12px 0;">
+                                <div style="color: #666; font-size: 13px;">
+                                    <b>💡 ข้อแนะนำ:</b><br>
+                                    1. คุณอาจไม่มีชื่ออยู่ในรายชื่อผู้ได้รับอนุญาตให้ใช้แอป [${appCode}]<br>
+                                    2. โปรดติดต่อผู้ดูแลระบบเพื่อขอสิทธิ์เข้าใช้งานเพิ่มเติม<br>
+                                    3. ตรวจสอบความถูกต้องของ App Code ในระบบ
+                                </div>
+                            </div>
+                        `;
+                        ViewController.showStatus(errorHtml, true);
+                        ViewController.elements.btnEnterApp.style.display = "none";
+                    }
+                } catch (error) {
+                    ViewController.showStatus(`<span class="error-text">Network Error (Step 2):</span> ${error.message}`, true);
+                }
+            }
+
+            document.addEventListener("DOMContentLoaded", initializeLiff);
+
+        })();
+    </script>
+</body>
+
+</html>
