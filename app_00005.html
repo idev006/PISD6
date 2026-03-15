@@ -273,7 +273,7 @@
                     }
                 } catch (err) {
                     console.error("LIFF Initialization failed", err);
-                    
+
                     const currentUrl = window.location.href;
                     const errorMsg = `
                         ❌ LIFF Init Error: ไม่สามารถเริ่มต้น LIFF ได้<br>
@@ -285,7 +285,7 @@
                             <b>💡 วิธีแก้:</b> โปรดก๊อปปี้ URL ด้านบนไปวางในช่อง <b>"Endpoint URL"</b> ใน LINE Developers Console (เมนู LIFF) ให้ตรงกันทุกตัวอักษรครับ
                         </div>
                     `;
-                    
+
                     ViewController.showStatus(errorMsg, true);
                     ViewController.elements.loadingText.style.display = "none";
                     ViewController.setupButton("ลองโหลดใหม่อีกครั้ง", true, () => window.location.reload());
