@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบบันทึกข้อมูลความเคลื่อนไหว - SSO</title>
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    
+    <style>
+        body, html { height: 100%; box-sizing: border-box; }
+        .bg-gradient-orange { background: linear-gradient(135deg, #ff8c42 0%, #ff6b35 100%); }
+        .btn-orange { background-color: #ff8c42; transition: all 0.3s ease; }
+        .btn-orange:hover { background-color: #ff6b35; transform: translateY(-2px); }
+        .card-shadow { box-shadow: 0 4px 15px rgba(255, 139, 66, 0.15); }
+        .profile-img { width: 80px; height: 80px; border-radius: 50%; border: 3px solid #fff; margin: 0 auto 1rem; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-slide-in { animation: slideIn 0.5s ease-out; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="app-wrapper w-full h-full overflow-auto">
+        
+        <div id="loginScreen" class="min-h-full bg-gradient-orange flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl card-shadow p-8 w-full max-w-md animate-slide-in text-center">
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">ตำรวจภูธร</h1>
+                <p class="text-gray-600 mb-6">จังหวัดพิษณุโลก</p>
+                
+                <div id="authContent">
+                    <p id="loadingText" class="text-orange-600 font-semibold animate-pulse">กำลังตรวจสอบสิทธิ์ด้วย LINE...</p>
+                    <img id="profileImage" class="profile-img hidden" src="" alt="Profile">
+                    <h3 id="displayName" class="text-xl font-bold text-gray-800"></h3>
+                    <p id="statusMessage" class="text-sm text-gray-500 mt-2 mb-4"></p>
+                    <div id="statusBox" class="text-sm p-4 bg-gray-100 rounded-lg hidden text-left mb-4"></div>
+                    <button id="btnRetry" class="btn-orange text-white px-6 py-2 rounded-lg hidden">ลองใหม่อีกครั้ง</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="mainApp" class="hidden min-h-full">
+            <div class="bg-gradient-orange text-white shadow-lg">
+                <div class="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
+                    <div>
+                        <h1 class="text-2xl md:text-3xl font-bold">ระบบบันทึกข้อมูลความเคลื่อนไหว</h1>
+                        <p id="reporterInfoDisplay" class="text-orange-100 text-sm mt-1"></p>
+                    </div>
+                    <button id="logoutBtn" class="bg-white text-orange-600 px-4 py-2 rounded-lg font-semibold hover:bg-orange-50 text-sm">ออกจากระบบ</button>
+                </div>
+            </div>
+
+            <div class="bg-white border-b border-gray-200">
+                <div class="max-w-7xl mx-auto px-4 flex gap-4">
+                    <button class="tab-btn active px-6 py-4 font-semibold text-orange-600 border-b-2 border-orange-600" data-tab="form">
+                        <i data-lucide="plus-circle" class="inline mr-2 w-5 h-5"></i>บันทึกข้อมูล
+                    </button>
+                    <button class="tab-btn px-6 py-4 font-semibold text-gray-600 border-b-2 border-transparent hover:text-orange-600" data-tab="dashboard">
+                        <i data-lucide="bar-chart-3" class="inline mr-2 w-5 h-5"></i>แดชบอร์ด
+                    </button>
+                </div>
+            </div>
+
+            <div class="max-w-7xl mx-auto px-4 py-8">
+                <div id="formTab" class="tab-content">
+                    <form id="dataForm" class="bg-white rounded-xl card-shadow p-8">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-8">กรอกข้อมูลความเคลื่อนไหว</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">วันที่ *</label>
+                                <input type="date" id="date" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">กลุ่มเคลื่อนไหว *</label>
+                                <input type="text" id="group" required placeholder="เช่น กลุ่มเรียกร้องสิทธิ..." class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">แกนนำ</label>
+                                <input type="text" id="leader" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">ผู้เข้าร่วมชุมนุม *</label>
+                                <input type="text" id="participants" required class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">สถานที่ชุมนุม *</label>
+                                <input type="text" id="location" required class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">เรื่องที่เรียกร้อง/กิจกรรม *</label>
+                                <textarea id="demands" required rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">ยื่นต่อ</label>
+                                <input type="text" id="submitTo" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">จำนวนคน (ประมาณการ)</label>
+                                <input type="number" id="count" min="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">ลิงก์ข่าว (ถ้ามี)</label>
+                                <input type="url" id="newsLink" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                            </div>
+                        </div>
+
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-4">อัพโหลดรูปภาพ (สูงสุด 5 รูป)</label>
+                            <div id="imageContainer" class="grid grid-cols-2 md:grid-cols-5 gap-4"></div>
+                            <template id="imageUploadTemplate">
+                                <div class="border-2 border-dashed border-orange-300 rounded-lg p-2 text-center cursor-pointer hover:bg-orange-50 transition">
+                                    <input type="file" accept="image/*" class="image-input hidden">
+                                    <div class="image-placeholder text-orange-400">
+                                        <i data-lucide="image-plus" class="mx-auto w-8 h-8"></i>
+                                        <p class="text-xs mt-1">อัพโหลด</p>
+                                    </div>
+                                    <img class="image-preview hidden w-full h-24 object-cover rounded" alt="">
+                                    <button type="button" class="remove-image hidden mt-1 text-red-600 text-xs font-bold">ลบรูป</button>
+                                </div>
+                            </template>
+                        </div>
+
+                        <div class="flex gap-4">
+                            <button type="submit" class="btn-orange text-white px-8 py-3 rounded-lg font-semibold flex items-center gap-2">
+                                <i data-lucide="send" class="w-5 h-5"></i> ส่งข้อมูล
+                            </button>
+                            <button type="reset" class="bg-gray-300 text-gray-700 px-8 py-3 rounded-lg font-semibold hover:bg-gray-400">ล้างข้อมูล</button>
+                        </div>
+                        
+                        <div id="loadingState" class="hidden mt-6 bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded-lg flex items-center gap-2 animate-pulse">
+                            <i data-lucide="loader" class="animate-spin w-5 h-5"></i> กำลังส่งข้อมูล...
+                        </div>
+                        <div id="successMessage" class="hidden mt-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg">✓ บันทึกข้อมูลสำเร็จ</div>
+                    </form>
+                </div>
+
+                <div id="dashboardTab" class="tab-content hidden">
+                    <div class="text-center py-20 text-gray-400 italic">กำลังโหลดข้อมูลแดชบอร์ด...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // ⚙️ Configuration (Configs จาก app_00001)
+        // ==========================================
+        const CONFIG = {
+            LIFF_ID: "2009416313-L7wUI9rt",
+            GAS_WEBAPP_URL: "https://script.google.com/macros/s/AKfycbwyI-KJlJzK1kKLkArN5aTgI5mefFJWbNXxvFG8jC011zn49lNAIkmm6BY1FMWYHuP6/exec",
+            APP_CODE: "app_00001" // ใช้ App Code เดิมจากไฟล์ SSO
+        };
+
+        let authorizedUser = null; // เก็บข้อมูลผู้ใช้จาก SSO
+        let dashboardData = [];
+        let pieChart = null, barChart = null;
+
+        // ==========================================
+        // 🛠 SSO & API Core Logic
+        // ==========================================
+        const ApiStub = {
+            async sendRequest(action, payloadData) {
+                const payload = { action: action, payload: payloadData };
+                try {
+                    const response = await fetch(CONFIG.GAS_WEBAPP_URL, {
+                        method: "POST",
+                        body: JSON.stringify(payload),
+                        headers: { "Content-Type": "text/plain;charset=utf-8" }
+                    });
+                    return await response.json();
+                } catch (error) { throw error; }
+            },
+            authLiff: (id) => ApiStub.sendRequest("liff_auth", { lineUserId: id }),
+            authSso: (id, code) => ApiStub.sendRequest("sso_auth", { lineUserId: id, appCode: code })
+        };
+
+        const ViewController = {
+            showStatus(text, isError = false) {
+                const box = document.getElementById("statusBox");
+                box.classList.remove("hidden");
+                box.innerHTML = `<span class="${isError ? 'text-red-600 font-bold' : 'text-gray-600'}">${text}</span>`;
+            },
+            updateProfile(profile) {
+                const img = document.getElementById("profileImage");
+                img.src = profile.pictureUrl;
+                img.classList.remove("hidden");
+                document.getElementById("displayName").innerText = "สวัสดี, " + profile.displayName;
+                document.getElementById("loadingText").classList.add("hidden");
+            }
+        };
+
+        // ==========================================
+        // 🚀 Initialize App & LIFF
+        // ==========================================
+        async function initializeApp() {
+            try {
+                ViewController.showStatus("กำลังเริ่มต้น LINE SDK...");
+                await liff.init({ liffId: CONFIG.LIFF_ID });
+
+                if (!liff.isLoggedIn()) {
+                    liff.login();
+                    return;
+                }
+
+                const profile = await liff.getProfile();
+                ViewController.updateProfile(profile);
+
+                // Step 1: Check Account Activation
+                ViewController.showStatus("ขั้นตอนที่ 1: ตรวจสอบบัญชี...");
+                const auth1 = await ApiStub.authLiff(profile.userId);
+                
+                if (auth1.status !== 200) {
+                    ViewController.showStatus(`❌ บัญชีไม่พร้อมใช้งาน: ${auth1.message}`, true);
+                    return;
+                }
+
+                // Step 2: Check App Authorization
+                ViewController.showStatus("ขั้นตอนที่ 2: ตรวจสอบสิทธิ์เข้าใช้ระบบ...");
+                const auth2 = await ApiStub.authSso(profile.userId, CONFIG.APP_CODE);
+
+                if (auth2.status === 200) {
+                    authorizedUser = {
+                        lineUserId: profile.userId,
+                        firstName: auth2.data.firstName,
+                        employeeNo: auth2.data.employeeNo
+                    };
+                    
+                    document.getElementById("loginScreen").classList.add("hidden");
+                    document.getElementById("mainApp").classList.remove("hidden");
+                    document.getElementById("reporterInfoDisplay").innerText = `ผู้รายงาน: คุณ${authorizedUser.firstName} (${authorizedUser.employeeNo})`;
+                    
+                    // เตรียมระบบ
+                    document.getElementById('date').valueAsDate = new Date();
+                    initializeImageUploads();
+                    lucide.createIcons();
+                } else {
+                    ViewController.showStatus(`❌ ไม่มีสิทธิ์ใช้งานระบบนี้: ${auth2.message}`, true);
+                }
+            } catch (err) {
+                ViewController.showStatus(`Error: ${err.message}`, true);
+                document.getElementById("btnRetry").classList.remove("hidden");
+            }
+        }
+
+        // ==========================================
+        // 📝 Form & Image Handling
+        // ==========================================
+        function initializeImageUploads() {
+            const container = document.getElementById('imageContainer');
+            container.innerHTML = '';
+            const template = document.getElementById('imageUploadTemplate');
+
+            for (let i = 1; i <= 5; i++) {
+                const clone = template.content.cloneNode(true);
+                const input = clone.querySelector('.image-input');
+                const uploader = clone.querySelector('[class*="border-dashed"]');
+                
+                uploader.addEventListener('click', () => input.click());
+                input.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (ev) => {
+                            clone.querySelector('.image-preview').src = ev.target.result;
+                            clone.querySelector('.image-preview').classList.remove('hidden');
+                            clone.querySelector('.image-placeholder').classList.add('hidden');
+                            clone.querySelector('.remove-image').classList.remove('hidden');
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+                container.appendChild(clone);
+            }
+            lucide.createIcons();
+        }
+
+        document.getElementById('dataForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const loading = document.getElementById('loadingState');
+            const success = document.getElementById('successMessage');
+            loading.classList.remove('hidden');
+            
+            // รวบรวมข้อมูลพร้อมข้อมูล SSO 
+            const formData = {
+                timestamp: new Date().toLocaleString('th-TH'),
+                date: document.getElementById('date').value,
+                group: document.getElementById('group').value,
+                leader: document.getElementById('leader').value,
+                participants: document.getElementById('participants').value,
+                location: document.getElementById('location').value,
+                demands: document.getElementById('demands').value,
+                submitTo: document.getElementById('submitTo').value,
+                count: document.getElementById('count').value || '0',
+                newsLink: document.getElementById('newsLink').value,
+                // ผูกข้อมูล SSO อัตโนมัติ 
+                reporterName: authorizedUser.firstName,
+                reporterId: authorizedUser.employeeNo,
+                lineId: authorizedUser.lineUserId,
+                images: []
+            };
+
+            // ดึงรูปภาพ
+            const imagePromises = Array.from(document.querySelectorAll('.image-input')).map(input => {
+                return new Promise(resolve => {
+                    if (input.files[0]) {
+                        const reader = new FileReader();
+                        reader.onload = (ev) => resolve(ev.target.result);
+                        reader.readAsDataURL(input.files[0]);
+                    } else resolve(null);
+                });
+            });
+
+            formData.images = (await Promise.all(imagePromises)).filter(img => img !== null);
+
+            try {
+                const result = await ApiStub.sendRequest("save_movement", formData); // เปลี่ยน action ให้สื่อความหมาย
+                if (result.success) {
+                    success.classList.remove('hidden');
+                    document.getElementById('dataForm').reset();
+                    initializeImageUploads();
+                    setTimeout(() => success.classList.add('hidden'), 3000);
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (err) {
+                alert('ส่งข้อมูลไม่สำเร็จ: ' + err.message);
+            } finally {
+                loading.classList.add('hidden');
+            }
+        });
+
+        // Tab Switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const tab = e.currentTarget.dataset.tab;
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active', 'border-orange-600', 'text-orange-600'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+                e.currentTarget.classList.add('active', 'border-orange-600', 'text-orange-600');
+                document.getElementById(tab + 'Tab').classList.remove('hidden');
+                lucide.createIcons();
+            });
+        });
+
+        document.getElementById("btnRetry").onclick = () => window.location.reload();
+        document.getElementById("logoutBtn").onclick = () => liff.logout() || window.location.reload();
+
+        document.addEventListener("DOMContentLoaded", initializeApp);
+    </script>
+</body>
+</html>
