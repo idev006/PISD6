@@ -314,6 +314,7 @@
             }
 
             function launchAppWorkspace() {
+                alert("✅ ผ่านระบบ Authentication & Authorization (SSO) สำเร็จ!");
                 document.getElementById("loginPage").classList.add("hidden");
                 document.getElementById("mainApp").classList.remove("hidden");
                 document.getElementById("officerInfo").innerText = `เจ้าหน้าที่: คุณ${authorizedUser.firstName} (${authorizedUser.employeeNo})`;
