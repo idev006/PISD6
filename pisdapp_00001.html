@@ -146,8 +146,7 @@
         (function () {
             const CONFIG = {
                 LIFF_ID: "2009416313-gtUQHyZ7",
-                //SSO_API_URL: "https://script.google.com/macros/s/AKfycbwyI-KJlJzK1kKLkArN5aTgI5mefFJWbNXxvFG8jC011zn49lNAIkmm6BY1FMWYHuP6/exec",
-                SSO_API_URL: "https://script.google.com/macros/s/AKfycbxBfv81aFd6ga6TvpLVy6N_9uYbyrGWauphP3cYJdYS1cN909FfM7B8eNWhdap4jqFH/exec",
+                SSO_API_URL: "https://script.google.com/macros/s/AKfycbwyI-KJlJzK1kKLkArN5aTgI5mefFJWbNXxvFG8jC011zn49lNAIkmm6BY1FMWYHuP6/exec",
                 DATA_API_URL: "https://script.google.com/macros/s/AKfycbw94pRu7JwSZ9OxIFGFIqNu_M8t64VSkw2i50aEtZRWEs8mIkD_vlHHsmiEq61uPYyG/exec",
                 APP_CODE: "pisdapp_00001"
             };
@@ -162,7 +161,7 @@
                     if (sessionStr && !payloadData.sid) {
                         try {
                             payloadData.sid = JSON.parse(sessionStr).sid;
-                        } catch(e) {}
+                        } catch (e) { }
                     }
                     const payload = { action: action, payload: payloadData };
                     const response = await fetch(url, {
@@ -171,7 +170,7 @@
                         headers: { "Content-Type": "text/plain;charset=utf-8" }
                     });
                     const result = await response.json();
-                    
+
                     // เซสซันหมดอายุ หรือไม่มีสิทธิ์ ให้เตะออกแบบอัตโนมัติ (Token Expired)
                     if (result.status === 401 || result.status === 403) {
                         localStorage.removeItem("pisd_session");
@@ -183,12 +182,12 @@
             };
 
             function initAppWorkspace(userData, pictureUrl) {
-                authorizedUser = { 
+                authorizedUser = {
                     lineUserId: userData.lineUserId,
-                    firstName: userData.userProfile.fullName, 
-                    employeeNo: userData.userProfile.employeeNo 
+                    firstName: userData.userProfile.fullName,
+                    employeeNo: userData.userProfile.employeeNo
                 };
-                
+
                 document.getElementById("loadingText").style.display = "none";
                 document.getElementById("profileImage").src = pictureUrl || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
                 document.getElementById("profileImage").classList.remove("hidden");
@@ -205,25 +204,25 @@
                 const statusBox = document.getElementById("statusBox");
                 try {
                     statusBox.classList.remove("hidden");
-                    
+
                     // Usecase 2: ทดลองกู้คืน Session (Session Resumption)
                     const cachedSessionStr = localStorage.getItem("pisd_session");
                     if (cachedSessionStr) {
-                         statusBox.innerText = "กำลังกู้คืน Session เดิม...";
-                         const cachedSession = JSON.parse(cachedSessionStr);
-                         const resumeRes = await ApiStub.sendRequest(CONFIG.SSO_API_URL, "resume_session", { sid: cachedSession.sid });
-                         
-                         if (resumeRes.status === 200) {
-                              // Session ฟื้นคืนชีพสำเร็จ ใช้งานต่อได้เลย
-                              const profilePic = localStorage.getItem("pisd_profile_pic") || "";
-                              const authData = resumeRes.data;
-                              initAppWorkspace({...authData, lineUserId: cachedSession.lineId}, profilePic);
-                              return; 
-                         } else {
-                              // ถ้ารหัสหมดอายุ, โดนถอนสิทธิ์, หรือถูกระงับ 
-                              localStorage.removeItem("pisd_session");
-                              localStorage.removeItem("pisd_profile_pic");
-                         }
+                        statusBox.innerText = "กำลังกู้คืน Session เดิม...";
+                        const cachedSession = JSON.parse(cachedSessionStr);
+                        const resumeRes = await ApiStub.sendRequest(CONFIG.SSO_API_URL, "resume_session", { sid: cachedSession.sid });
+
+                        if (resumeRes.status === 200) {
+                            // Session ฟื้นคืนชีพสำเร็จ ใช้งานต่อได้เลย
+                            const profilePic = localStorage.getItem("pisd_profile_pic") || "";
+                            const authData = resumeRes.data;
+                            initAppWorkspace({ ...authData, lineUserId: cachedSession.lineId }, profilePic);
+                            return;
+                        } else {
+                            // ถ้ารหัสหมดอายุ, โดนถอนสิทธิ์, หรือถูกระงับ 
+                            localStorage.removeItem("pisd_session");
+                            localStorage.removeItem("pisd_profile_pic");
+                        }
                     }
 
                     // Usecase 1: ถ้ากู้ไม่ได้ หรือเข้าครั้งแรก ให้เรียก LINE SDK (SSO Auth)
@@ -233,26 +232,26 @@
 
                     const profile = await liff.getProfile();
                     localStorage.setItem("pisd_profile_pic", profile.pictureUrl); // แอบจำรูปโปรไฟล์ไว้ใช้ครั้งหน้า
-                    
+
                     statusBox.innerText = "กำลังยืนยันสิทธิ์ SSO กับฐานข้อมูลกลาง...";
                     // ไม่ต้องเรียก liff_auth ซ้ำซ้อน ยิง sso_auth ทีเดียวจบ
-                    const authRes = await ApiStub.sendRequest(CONFIG.SSO_API_URL, "sso_auth", { 
-                        lineUserId: profile.userId, 
-                        appCode: CONFIG.APP_CODE 
+                    const authRes = await ApiStub.sendRequest(CONFIG.SSO_API_URL, "sso_auth", {
+                        lineUserId: profile.userId,
+                        appCode: CONFIG.APP_CODE
                     });
 
                     if (authRes.status !== 200) throw new Error(authRes.message);
 
                     const authData = authRes.data;
-                    
+
                     // บันทึก Session ลง LocalStorage เพื่อใช้ใน Usecase 2 อนาคต
                     localStorage.setItem("pisd_session", JSON.stringify({
-                         sid: authData.auth.sid,
-                         exp_dt: authData.auth.exp_dt,
-                         lineId: profile.userId
+                        sid: authData.auth.sid,
+                        exp_dt: authData.auth.exp_dt,
+                        lineId: profile.userId
                     }));
 
-                    initAppWorkspace({...authData, lineUserId: profile.userId}, profile.pictureUrl);
+                    initAppWorkspace({ ...authData, lineUserId: profile.userId }, profile.pictureUrl);
 
                 } catch (err) {
                     statusBox.innerHTML = `<span class="text-red-600 font-bold">❌ Error:</span> ${err.message}`;
@@ -267,16 +266,16 @@
                     // เรียกข้อมูลผ่าน URL เดิม (GET) และแนบ sid ไปเพื่อตรวจสิทธิ์ฝั่ง Backend
                     const sessionStr = localStorage.getItem("pisd_session");
                     const sid = sessionStr ? JSON.parse(sessionStr).sid : "";
-                    
+
                     const res = await fetch(`${CONFIG.DATA_API_URL}?action=getData&sid=${sid}`);
                     const data = await res.json();
-                    
+
                     // หากโดนปฏิเสธจาก backend (401/403) เคลียร์ทิ้ง
                     if (data.status === 401 || data.status === 403) {
-                         localStorage.removeItem("pisd_session");
-                         alert("เซสซันการดูข้อมูลหมดอายุ กรุณาเข้าสู่ระบบใหม่");
-                         location.reload();
-                         return;
+                        localStorage.removeItem("pisd_session");
+                        alert("เซสซันการดูข้อมูลหมดอายุ กรุณาเข้าสู่ระบบใหม่");
+                        location.reload();
+                        return;
                     }
 
                     dashboardData = data.records || [];
@@ -384,7 +383,7 @@
                 try {
                     // ส่งแบบ POST ผ่าน ApiStub ซึ่งจะแอบแนบ { sid } เข้า payloadData ให้แล้ว
                     const res = await ApiStub.sendRequest(CONFIG.DATA_API_URL, "save", payload);
-                    
+
                     // ลองเช็ค status === 200 (แบบใหม่) หรือ res.success (มาตรฐานเก่า)
                     if (res.status === 200 || res.success) {
                         status.className = "p-4 rounded-lg bg-green-100 text-green-700 block";
