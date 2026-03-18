@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,28 +9,62 @@
     <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-    
+
     <style>
-        body, html { height: 100%; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
-        .bg-gradient-orange { background: linear-gradient(135deg, #ff8c42 0%, #ff6b35 100%); }
-        .btn-orange { background-color: #ff8c42; transition: all 0.3s ease; }
-        .btn-orange:hover { background-color: #ff6b35; transform: translateY(-2px); }
-        .card-shadow { box-shadow: 0 4px 15px rgba(255, 139, 66, 0.15); }
-        .profile-img { width: 100px; height: 100px; border-radius: 50%; border: 3px solid #ddd; object-fit: cover; margin-bottom: 1rem; }
-        .tab-btn.active { color: #ff8c42; border-bottom: 2px solid #ff8c42; }
+        body,
+        html {
+            height: 100%;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+        }
+
+        .bg-gradient-orange {
+            background: linear-gradient(135deg, #ff8c42 0%, #ff6b35 100%);
+        }
+
+        .btn-orange {
+            background-color: #ff8c42;
+            transition: all 0.3s ease;
+        }
+
+        .btn-orange:hover {
+            background-color: #ff6b35;
+            transform: translateY(-2px);
+        }
+
+        .card-shadow {
+            box-shadow: 0 4px 15px rgba(255, 139, 66, 0.15);
+        }
+
+        .profile-img {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 3px solid #ddd;
+            object-fit: cover;
+            margin-bottom: 1rem;
+        }
+
+        .tab-btn.active {
+            color: #ff8c42;
+            border-bottom: 2px solid #ff8c42;
+        }
     </style>
 </head>
+
 <body class="bg-gray-50">
     <div class="app-wrapper w-full h-full overflow-auto">
-        
+
         <div id="loginScreen" class="min-h-full bg-gradient-orange flex items-center justify-center p-4">
             <div class="bg-white rounded-2xl card-shadow p-8 w-full max-w-md text-center">
                 <h2 class="text-2xl font-bold text-orange-600 mb-2">PISD6 Portal</h2>
                 <p id="loadingText" class="text-gray-500 mb-4">กำลังโหลดข้อมูลระบบ...</p>
                 <img id="profileImage" class="profile-img mx-auto hidden" src="" alt="Profile">
                 <h3 id="displayName" class="text-lg font-semibold"></h3>
-                <div id="statusBox" class="text-sm p-4 bg-gray-100 rounded-lg text-left hidden mb-4 border-l-4 border-orange-500"></div>
-                <button id="btnRetry" class="btn-orange text-white px-6 py-2 rounded-lg hidden w-full font-bold">ลองใหม่อีกครั้ง</button>
+                <div id="statusBox"
+                    class="text-sm p-4 bg-gray-100 rounded-lg text-left hidden mb-4 border-l-4 border-orange-500"></div>
+                <button id="btnRetry"
+                    class="btn-orange text-white px-6 py-2 rounded-lg hidden w-full font-bold">ลองใหม่อีกครั้ง</button>
             </div>
         </div>
 
@@ -52,23 +87,35 @@
                 <div id="formTab" class="tab-content">
                     <form id="dataForm" class="bg-white rounded-xl card-shadow p-8 space-y-6">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div><label class="block text-sm font-medium mb-2">วันที่ *</label><input type="date" id="date" required class="w-full border p-2 rounded-lg focus:ring-2 focus:ring-orange-400 outline-none"></div>
-                            <div><label class="block text-sm font-medium mb-2">กลุ่มเคลื่อนไหว *</label><input type="text" id="group" required placeholder="ระบุชื่อกลุ่ม" class="w-full border p-2 rounded-lg"></div>
-                            <div class="md:col-span-2"><label class="block text-sm font-medium mb-2">สถานที่ *</label><input type="text" id="location" required placeholder="สถานที่เกิดเหตุ" class="w-full border p-2 rounded-lg"></div>
-                            <div class="md:col-span-2"><label class="block text-sm font-medium mb-2">เรื่องที่เรียกร้อง *</label><textarea id="demands" required rows="3" class="w-full border p-2 rounded-lg"></textarea></div>
-                            <div><label class="block text-sm font-medium mb-2">จำนวนคน</label><input type="number" id="count" class="w-full border p-2 rounded-lg"></div>
+                            <div><label class="block text-sm font-medium mb-2">วันที่ *</label><input type="date"
+                                    id="date" required
+                                    class="w-full border p-2 rounded-lg focus:ring-2 focus:ring-orange-400 outline-none">
+                            </div>
+                            <div><label class="block text-sm font-medium mb-2">กลุ่มเคลื่อนไหว *</label><input
+                                    type="text" id="group" required placeholder="ระบุชื่อกลุ่ม"
+                                    class="w-full border p-2 rounded-lg"></div>
+                            <div class="md:col-span-2"><label class="block text-sm font-medium mb-2">สถานที่
+                                    *</label><input type="text" id="location" required placeholder="สถานที่เกิดเหตุ"
+                                    class="w-full border p-2 rounded-lg"></div>
+                            <div class="md:col-span-2"><label class="block text-sm font-medium mb-2">เรื่องที่เรียกร้อง
+                                    *</label><textarea id="demands" required rows="3"
+                                    class="w-full border p-2 rounded-lg"></textarea></div>
+                            <div><label class="block text-sm font-medium mb-2">จำนวนคน</label><input type="number"
+                                    id="count" class="w-full border p-2 rounded-lg"></div>
                         </div>
                         <div>
                             <label class="block text-sm font-medium mb-4">รูปภาพ (สูงสุด 5 รูป)</label>
                             <div id="imageContainer" class="grid grid-cols-2 md:grid-cols-5 gap-4"></div>
                         </div>
-                        <button type="submit" class="btn-orange text-white w-full py-4 rounded-lg font-bold text-lg shadow-lg">บันทึกข้อมูล</button>
+                        <button type="submit"
+                            class="btn-orange text-white w-full py-4 rounded-lg font-bold text-lg shadow-lg">บันทึกข้อมูล</button>
                         <div id="formStatus" class="hidden p-4 rounded-lg text-center font-bold"></div>
                     </form>
                 </div>
 
                 <div id="dashboardTab" class="tab-content hidden">
-                    <div id="dashboardLoading" class="text-center py-10 text-orange-600 font-bold animate-pulse">กำลังโหลดข้อมูล...</div>
+                    <div id="dashboardLoading" class="text-center py-10 text-orange-600 font-bold animate-pulse">
+                        กำลังโหลดข้อมูล...</div>
                     <div id="dashboardContent" class="hidden">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                             <div class="bg-white rounded-xl card-shadow p-6">
@@ -83,7 +130,11 @@
                         <div id="statsGrid" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"></div>
                         <div class="bg-white rounded-xl card-shadow p-6">
                             <h3 class="font-bold text-gray-700 mb-4 text-center">ข้อมูลล่าสุด</h3>
-                            <div class="overflow-x-auto"><table class="w-full text-sm text-left"><tbody id="dashboardTable"></tbody></table></div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm text-left">
+                                    <tbody id="dashboardTable"></tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -107,43 +158,102 @@
 
             const ApiStub = {
                 async sendRequest(url, action, payloadData) {
+                    const sessionStr = localStorage.getItem("pisd_session");
+                    if (sessionStr && !payloadData.sid) {
+                        try {
+                            payloadData.sid = JSON.parse(sessionStr).sid;
+                        } catch(e) {}
+                    }
                     const payload = { action: action, payload: payloadData };
                     const response = await fetch(url, {
                         method: "POST",
                         body: JSON.stringify(payload),
                         headers: { "Content-Type": "text/plain;charset=utf-8" }
                     });
-                    return await response.json();
+                    const result = await response.json();
+                    
+                    // เซสซันหมดอายุ หรือไม่มีสิทธิ์ ให้เตะออกแบบอัตโนมัติ (Token Expired)
+                    if (result.status === 401 || result.status === 403) {
+                        localStorage.removeItem("pisd_session");
+                        alert("เซสซันของคุณหมดอายุ หรือถูกจำกัดสิทธิ์ กรุณาเข้าสู่ระบบใหม่");
+                        location.reload();
+                    }
+                    return result;
                 }
             };
+
+            function initAppWorkspace(userData, pictureUrl) {
+                authorizedUser = { 
+                    lineUserId: userData.lineUserId,
+                    firstName: userData.userProfile.fullName, 
+                    employeeNo: userData.userProfile.employeeNo 
+                };
+                
+                document.getElementById("loadingText").style.display = "none";
+                document.getElementById("profileImage").src = pictureUrl || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+                document.getElementById("profileImage").classList.remove("hidden");
+                document.getElementById("displayName").innerText = "สวัสดี, " + userData.userProfile.fullName;
+
+                document.getElementById("loginScreen").classList.add("hidden");
+                document.getElementById("mainApp").classList.remove("hidden");
+                document.getElementById("reporterInfo").innerText = `ผู้รายงาน: คุณ${authorizedUser.firstName} (${authorizedUser.employeeNo})`;
+
+                setupFormUI();
+            }
 
             async function startApp() {
                 const statusBox = document.getElementById("statusBox");
                 try {
                     statusBox.classList.remove("hidden");
+                    
+                    // Usecase 2: ทดลองกู้คืน Session (Session Resumption)
+                    const cachedSessionStr = localStorage.getItem("pisd_session");
+                    if (cachedSessionStr) {
+                         statusBox.innerText = "กำลังกู้คืน Session เดิม...";
+                         const cachedSession = JSON.parse(cachedSessionStr);
+                         const resumeRes = await ApiStub.sendRequest(CONFIG.SSO_API_URL, "resume_session", { sid: cachedSession.sid });
+                         
+                         if (resumeRes.status === 200) {
+                              // Session ฟื้นคืนชีพสำเร็จ ใช้งานต่อได้เลย
+                              const profilePic = localStorage.getItem("pisd_profile_pic") || "";
+                              const authData = resumeRes.data;
+                              initAppWorkspace({...authData, lineUserId: cachedSession.lineId}, profilePic);
+                              return; 
+                         } else {
+                              // ถ้ารหัสหมดอายุ, โดนถอนสิทธิ์, หรือถูกระงับ 
+                              localStorage.removeItem("pisd_session");
+                              localStorage.removeItem("pisd_profile_pic");
+                         }
+                    }
+
+                    // Usecase 1: ถ้ากู้ไม่ได้ หรือเข้าครั้งแรก ให้เรียก LINE SDK (SSO Auth)
                     statusBox.innerText = "กำลังเชื่อมต่อ LINE SDK...";
                     await liff.init({ liffId: CONFIG.LIFF_ID });
                     if (!liff.isLoggedIn()) { liff.login(); return; }
 
                     const profile = await liff.getProfile();
-                    document.getElementById("loadingText").style.display = "none";
-                    document.getElementById("profileImage").src = profile.pictureUrl;
-                    document.getElementById("profileImage").classList.remove("hidden");
-                    document.getElementById("displayName").innerText = "สวัสดี, " + profile.displayName;
-
-                    statusBox.innerText = "ยืนยันสิทธิ์ SSO...";
-                    const s1 = await ApiStub.sendRequest(CONFIG.SSO_API_URL, "liff_auth", { lineUserId: profile.userId });
-                    if (s1.status !== 200) throw new Error(s1.message);
-
-                    const s2 = await ApiStub.sendRequest(CONFIG.SSO_API_URL, "sso_auth", { lineUserId: profile.userId, appCode: CONFIG.APP_CODE });
-                    if (s2.status !== 200) throw new Error(s2.message);
-
-                    authorizedUser = { lineUserId: profile.userId, firstName: s2.data.firstName, employeeNo: s2.data.employeeNo };
-                    document.getElementById("loginScreen").classList.add("hidden");
-                    document.getElementById("mainApp").classList.remove("hidden");
-                    document.getElementById("reporterInfo").innerText = `ผู้รายงาน: คุณ${authorizedUser.firstName} (${authorizedUser.employeeNo})`;
+                    localStorage.setItem("pisd_profile_pic", profile.pictureUrl); // แอบจำรูปโปรไฟล์ไว้ใช้ครั้งหน้า
                     
-                    setupFormUI();
+                    statusBox.innerText = "กำลังยืนยันสิทธิ์ SSO กับฐานข้อมูลกลาง...";
+                    // ไม่ต้องเรียก liff_auth ซ้ำซ้อน ยิง sso_auth ทีเดียวจบ
+                    const authRes = await ApiStub.sendRequest(CONFIG.SSO_API_URL, "sso_auth", { 
+                        lineUserId: profile.userId, 
+                        appCode: CONFIG.APP_CODE 
+                    });
+
+                    if (authRes.status !== 200) throw new Error(authRes.message);
+
+                    const authData = authRes.data;
+                    
+                    // บันทึก Session ลง LocalStorage เพื่อใช้ใน Usecase 2 อนาคต
+                    localStorage.setItem("pisd_session", JSON.stringify({
+                         sid: authData.auth.sid,
+                         exp_dt: authData.auth.exp_dt,
+                         lineId: profile.userId
+                    }));
+
+                    initAppWorkspace({...authData, lineUserId: profile.userId}, profile.pictureUrl);
+
                 } catch (err) {
                     statusBox.innerHTML = `<span class="text-red-600 font-bold">❌ Error:</span> ${err.message}`;
                     document.getElementById("btnRetry").classList.remove("hidden");
@@ -154,11 +264,23 @@
                 document.getElementById("dashboardLoading").classList.remove("hidden");
                 document.getElementById("dashboardContent").classList.add("hidden");
                 try {
-                    // เรียกข้อมูลผ่าน URL เดิม (GET)
-                    const res = await fetch(CONFIG.DATA_API_URL + "?action=getData");
-                    const data = await res.json();
-                    dashboardData = data.records || [];
+                    // เรียกข้อมูลผ่าน URL เดิม (GET) และแนบ sid ไปเพื่อตรวจสิทธิ์ฝั่ง Backend
+                    const sessionStr = localStorage.getItem("pisd_session");
+                    const sid = sessionStr ? JSON.parse(sessionStr).sid : "";
                     
+                    const res = await fetch(`${CONFIG.DATA_API_URL}?action=getData&sid=${sid}`);
+                    const data = await res.json();
+                    
+                    // หากโดนปฏิเสธจาก backend (401/403) เคลียร์ทิ้ง
+                    if (data.status === 401 || data.status === 403) {
+                         localStorage.removeItem("pisd_session");
+                         alert("เซสซันการดูข้อมูลหมดอายุ กรุณาเข้าสู่ระบบใหม่");
+                         location.reload();
+                         return;
+                    }
+
+                    dashboardData = data.records || [];
+
                     updateStatsGrid(dashboardData);
                     updateCharts(dashboardData);
                     updateTable(dashboardData);
@@ -242,7 +364,7 @@
                 status.classList.remove('hidden');
                 status.className = "p-4 rounded-lg bg-blue-100 text-blue-700 font-bold block";
                 status.innerText = "กำลังส่งข้อมูล...";
-                
+
                 const payload = {
                     date: document.getElementById('date').value,
                     group: document.getElementById('group').value,
@@ -260,13 +382,18 @@
                 });
 
                 try {
+                    // ส่งแบบ POST ผ่าน ApiStub ซึ่งจะแอบแนบ { sid } เข้า payloadData ให้แล้ว
                     const res = await ApiStub.sendRequest(CONFIG.DATA_API_URL, "save", payload);
-                    if (res.success) {
+                    
+                    // ลองเช็ค status === 200 (แบบใหม่) หรือ res.success (มาตรฐานเก่า)
+                    if (res.status === 200 || res.success) {
                         status.className = "p-4 rounded-lg bg-green-100 text-green-700 block";
                         status.innerText = "✅ บันทึกข้อมูลเรียบร้อย!";
                         document.getElementById('dataForm').reset(); setupFormUI();
                         setTimeout(() => status.classList.add('hidden'), 3000);
-                    } else throw new Error(res.error);
+                    } else {
+                        throw new Error(res.message || res.error || "ไม่สามารถบันทึกได้");
+                    }
                 } catch (err) { status.className = "p-4 rounded-lg bg-red-100 text-red-700 block"; status.innerText = "❌ เกิดข้อผิดพลาด: " + err.message; }
             };
 
@@ -287,4 +414,5 @@
         })();
     </script>
 </body>
+
 </html>
