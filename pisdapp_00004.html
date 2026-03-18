@@ -314,11 +314,8 @@
                     document.getElementById("profileImage").classList.remove("hidden");
                     document.getElementById("displayName").innerText = "สวัสดี, " + profile.displayName;
 
-                    statusBox.innerText = "กำลังยืนยันสิทธิ์ SSO (Step 1)...";
-                    const res1 = await ApiStub.sendRequest(CONFIG.SSO_API_URL, "liff_auth", { lineUserId: profile.userId });
-                    if (res1.status !== 200) throw new Error(res1.message);
-
-                    statusBox.innerText = "กำลังตรวจสอบสิทธิ์แอป (Step 2)...";
+                    statusBox.innerText = "กำลังยืนยันสิทธิ์ SSO กับฐานข้อมูลกลาง...";
+                    // ⚡ (Optimized): ยิง sso_auth ตัวเดียวจบ ระบบฝั่ง Server จะแสกนทั้งตัว User Status และ App Status ให้
                     const res2 = await ApiStub.sendRequest(CONFIG.SSO_API_URL, "sso_auth", { lineUserId: profile.userId, appCode: CONFIG.APP_CODE });
                     if (res2.status !== 200) throw new Error(res2.message);
 
