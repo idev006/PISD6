@@ -239,7 +239,7 @@
                     if (sessionStr && !payloadData.sid) {
                         try {
                             payloadData.sid = JSON.parse(sessionStr).sid;
-                        } catch(e) {}
+                        } catch (e) { }
                     }
                     const payload = { action, payload: payloadData };
                     const response = await fetch(url, {
@@ -248,7 +248,7 @@
                         headers: { "Content-Type": "text/plain;charset=utf-8" }
                     });
                     const result = await response.json();
-                    
+
                     if (result.status === 401 || result.status === 403) {
                         localStorage.removeItem("pisd_session");
                         alert("เซสซันของคุณหมดอายุ หรือถูกจำกัดสิทธิ์ กรุณาเข้าสู่ระบบใหม่");
@@ -259,12 +259,12 @@
             };
 
             function initAppWorkspace(userData, pictureUrl) {
-                authorizedUser = { 
+                authorizedUser = {
                     lineUserId: userData.lineUserId,
-                    firstName: userData.userProfile.fullName, 
-                    employeeNo: userData.userProfile.employeeNo 
+                    firstName: userData.userProfile.fullName,
+                    employeeNo: userData.userProfile.employeeNo
                 };
-                
+
                 document.getElementById("loadingText").classList.add("hidden");
                 document.getElementById("profileImage").src = pictureUrl || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
                 document.getElementById("profileImage").classList.remove("hidden");
@@ -280,21 +280,21 @@
                 const statusBox = document.getElementById("statusBox");
                 try {
                     statusBox.classList.remove("hidden");
-                    
+
                     const cachedSessionStr = localStorage.getItem("pisd_session");
                     if (cachedSessionStr) {
-                         statusBox.innerText = "กำลังกู้คืน Session เดิม...";
-                         const cachedSession = JSON.parse(cachedSessionStr);
-                         const resumeRes = await ApiStub.sendRequest(CONFIG.SSO_API_URL, "resume_session", { sid: cachedSession.sid });
-                         
-                         if (resumeRes.status === 200) {
-                              const profilePic = localStorage.getItem("pisd_profile_pic") || "";
-                              initAppWorkspace({...resumeRes.data, lineUserId: cachedSession.lineId}, profilePic);
-                              return; 
-                         } else {
-                              localStorage.removeItem("pisd_session");
-                              localStorage.removeItem("pisd_profile_pic");
-                         }
+                        statusBox.innerText = "กำลังกู้คืน Session เดิม...";
+                        const cachedSession = JSON.parse(cachedSessionStr);
+                        const resumeRes = await ApiStub.sendRequest(CONFIG.SSO_API_URL, "resume_session", { sid: cachedSession.sid });
+
+                        if (resumeRes.status === 200) {
+                            const profilePic = localStorage.getItem("pisd_profile_pic") || "";
+                            initAppWorkspace({ ...resumeRes.data, lineUserId: cachedSession.lineId }, profilePic);
+                            return;
+                        } else {
+                            localStorage.removeItem("pisd_session");
+                            localStorage.removeItem("pisd_profile_pic");
+                        }
                     }
 
                     statusBox.innerText = "กำลังเชื่อมต่อ LINE SDK...";
@@ -303,24 +303,24 @@
 
                     const profile = await liff.getProfile();
                     localStorage.setItem("pisd_profile_pic", profile.pictureUrl);
-                    
+
                     statusBox.innerText = "กำลังยืนยันสิทธิ์ SSO กับฐานข้อมูลกลาง...";
-                    const authRes = await ApiStub.sendRequest(CONFIG.SSO_API_URL, "sso_auth", { 
-                        lineUserId: profile.userId, 
-                        appCode: CONFIG.APP_CODE 
+                    const authRes = await ApiStub.sendRequest(CONFIG.SSO_API_URL, "sso_auth", {
+                        lineUserId: profile.userId,
+                        appCode: CONFIG.APP_CODE
                     });
 
                     if (authRes.status !== 200) throw new Error(authRes.message);
 
                     const authData = authRes.data;
-                    
+
                     localStorage.setItem("pisd_session", JSON.stringify({
-                         sid: authData.auth.sid,
-                         exp_dt: authData.auth.exp_dt,
-                         lineId: profile.userId
+                        sid: authData.auth.sid,
+                        exp_dt: authData.auth.exp_dt,
+                        lineId: profile.userId
                     }));
 
-                    initAppWorkspace({...authData, lineUserId: profile.userId}, profile.pictureUrl);
+                    initAppWorkspace({ ...authData, lineUserId: profile.userId }, profile.pictureUrl);
 
                 } catch (err) {
                     statusBox.innerHTML = `<span class="text-red-600 font-bold">❌ Error: ${err.message}</span>`;
@@ -333,12 +333,12 @@
                 try {
                     const res = await fetch(CONFIG.DATA_API_URL + "?action=getData");
                     const result = await res.json();
-                    
+
                     if (result.status === 401 || result.status === 403) {
-                         localStorage.removeItem("pisd_session");
-                         alert("เซสซันการดูข้อมูลหมดอายุ กรุณาเข้าสู่ระบบใหม่");
-                         location.reload();
-                         return;
+                        localStorage.removeItem("pisd_session");
+                        alert("เซสซันการดูข้อมูลหมดอายุ กรุณาเข้าสู่ระบบใหม่");
+                        location.reload();
+                        return;
                     }
 
                     const data = result.data || [];
