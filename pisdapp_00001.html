@@ -211,8 +211,11 @@
                     if (cachedSessionStr) {
                         statusBox.innerText = "กำลังกู้คืน Session เดิม...";
                         const cachedSession = JSON.parse(cachedSessionStr);
-                        const resumeRes = await ApiStub.sendRequest(CONFIG.SSO_API_URL, "resume_session", { sid: cachedSession.sid });
-
+                        const resumeRes = await ApiStub.sendRequest(CONFIG.SSO_API_URL, "resume_session", { 
+                            sid: cachedSession.sid,
+                            appCode: CONFIG.APP_CODE // ส่ง appCode ไปเช็คสิทธิ์ซ้ำ
+                        });
+                         
                         if (resumeRes.status === 200) {
                             // Session ฟื้นคืนชีพสำเร็จ ใช้งานต่อได้เลย
                             const profilePic = localStorage.getItem("pisd_profile_pic") || "";
