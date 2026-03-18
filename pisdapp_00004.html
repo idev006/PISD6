@@ -126,7 +126,8 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div><label class="block text-sm font-medium text-gray-700 mb-2">วันที่รับหนังสือ *</label>
                                 <input type="date" id="receive-date" required
-                                    class="w-full px-4 py-3 border rounded-xl outline-none focus:border-blue-500"></div>
+                                    class="w-full px-4 py-3 border rounded-xl outline-none focus:border-blue-500">
+                            </div>
                             <div><label class="block text-sm font-medium text-gray-700 mb-2">เลขทะเบียนรับ *</label>
                                 <div class="flex gap-2"><input type="text" id="reg-number" required readonly
                                         class="flex-1 px-4 py-3 border rounded-xl bg-blue-50 text-blue-700 font-bold"><button
@@ -137,7 +138,8 @@
                         </div>
                         <div><label class="block text-sm font-medium text-gray-700 mb-2">ที่ (เลขที่หนังสือ) *</label>
                             <input type="text" id="doc-number" required placeholder="ตช 0029.153/..."
-                                class="w-full px-4 py-3 border rounded-xl"></div>
+                                class="w-full px-4 py-3 border rounded-xl">
+                        </div>
                         <div><label class="block text-sm font-medium text-gray-700 mb-2">เรื่อง *</label> <textarea
                                 id="subject" required rows="2" placeholder="ระบุเรื่องของหนังสือ"
                                 class="w-full px-4 py-3 border rounded-xl"></textarea></div>
@@ -204,9 +206,9 @@
                         body: JSON.stringify(payload),
                         headers: { "Content-Type": "text/plain;charset=utf-8" } // ป้องกัน CORS
                     });
-                    
+
                     const resJson = await response.json();
-                    
+
                     // หาก Backend ตอบกลับว่าด่านตรวจสิทธิ์ไม่ผ่าน (Session หมดอายุ หรือ สิทธิ์ไม่พอ)
                     if (resJson.status === 401 || resJson.status === 403) {
                         alert("Session หมดอายุ หรือคุณไม่มีสิทธิ์การใช้งาน กรุณาเข้าสู่ระบบใหม่");
@@ -238,9 +240,9 @@
                     if (cachedSessionStr) {
                         statusBox.innerText = "กำลังกู้คืน Session เดิม...";
                         const cachedSession = JSON.parse(cachedSessionStr);
-                        const resumeRes = await ApiStub.sendRequest(CONFIG.SSO_API_URL, "resume_session", { 
+                        const resumeRes = await ApiStub.sendRequest(CONFIG.SSO_API_URL, "resume_session", {
                             sid: cachedSession.sid,
-                            appCode: CONFIG.APP_CODE 
+                            appCode: CONFIG.APP_CODE
                         });
 
                         if (resumeRes.status === 200) {
@@ -255,14 +257,14 @@
                             // หน่วงเวลา UI เล็กน้อยให้ผู้ใช้เห็นว่าเข้าสำเร็จ
                             await new Promise(resolve => setTimeout(resolve, 800));
 
-                            authorizedUser = { 
-                                lineUserId: cachedSession.lineId, 
-                                firstName: resumeRes.data.userProfile.fullName, 
-                                employeeNo: resumeRes.data.userProfile.employeeNo 
+                            authorizedUser = {
+                                lineUserId: cachedSession.lineId,
+                                firstName: resumeRes.data.userProfile.fullName,
+                                employeeNo: resumeRes.data.userProfile.employeeNo
                             };
-                            
+
                             launchAppWorkspace();
-                            return; 
+                            return;
                         } else {
                             // ถ้า Resume ไม่ผ่าน ให้ลบทิ้ง แล้วทำ Usecase 1 ปกติ
                             localStorage.removeItem("pisd_session");
@@ -280,7 +282,7 @@
 
                     const profile = await liff.getProfile();
                     localStorage.setItem("pisd_profile_pic", profile.pictureUrl);
-                    
+
                     document.getElementById("loadingText").classList.add("hidden");
                     document.getElementById("profileImage").src = profile.pictureUrl;
                     document.getElementById("profileImage").classList.remove("hidden");
@@ -296,10 +298,10 @@
 
                     // เก็บตั๋ว Session ชิ้นใหม่ลงกระเป๋าตาม Usecase 1
                     const authData = res2.data.auth;
-                    localStorage.setItem(`pisd_session`, JSON.stringify({ 
-                        sid: authData.sid, 
-                        exp_dt: authData.exp_dt, 
-                        lineId: profile.userId 
+                    localStorage.setItem(`pisd_session`, JSON.stringify({
+                        sid: authData.sid,
+                        exp_dt: authData.exp_dt,
+                        lineId: profile.userId
                     }));
 
                     // ผ่านการตรวจสอบสิทธิ์
