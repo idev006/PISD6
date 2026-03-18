@@ -127,11 +127,13 @@
                                 <div><label class="block text-sm font-bold text-gray-700 mb-1">เลขทะเบียนส่ง *</label>
                                     <input type="text" id="register-no" readonly
                                         class="w-full px-4 py-3 border rounded-xl bg-gray-50 font-bold text-green-700"
-                                        placeholder="อัตโนมัติ"></div>
+                                        placeholder="อัตโนมัติ">
+                                </div>
                             </div>
                             <div><label class="block text-sm font-bold text-gray-700 mb-1">ที่ (เลขที่หนังสือ) *</label>
                                 <input type="text" id="doc-number" required placeholder="เช่น พล 0000.01/..."
-                                    class="w-full px-4 py-3 border rounded-xl"></div>
+                                    class="w-full px-4 py-3 border rounded-xl">
+                            </div>
                             <div><label class="block text-sm font-bold text-gray-700 mb-1">เรื่อง *</label> <textarea
                                     id="subject" required rows="2" placeholder="ระบุหัวข้อเรื่อง"
                                     class="w-full px-4 py-3 border rounded-xl"></textarea></div>
@@ -170,7 +172,7 @@
             // ⚙️ Configurations
             // ==========================================
             const CONFIG = {
-                LIFF_ID: "2009416313-TSCxm4Sp", // LIFF ID ประจำกลุ่ม
+                LIFF_ID: "2009416313-TSCxm4Sp", // LIFF ID ประจำกลุ่ม 
                 SSO_API_URL: "https://script.google.com/macros/s/AKfycbwyI-KJlJzK1kKLkArN5aTgI5mefFJWbNXxvFG8jC011zn49lNAIkmm6BY1FMWYHuP6/exec",
                 DATA_API_URL: "https://script.google.com/macros/s/AKfycbzzxyfAe_ulkkSzbDMpB_r3zs8myRaPM7R1XnAgkXrIU_B1p60BMe-OjSs0j6tHUE_G_w/exec",
                 APP_CODE: "pisdapp_00005"
@@ -197,9 +199,9 @@
                         body: JSON.stringify(payload),
                         headers: { "Content-Type": "text/plain;charset=utf-8" } // เลี่ยงปัญหา CORS
                     });
-                    
+
                     const resJson = await response.json();
-                    
+
                     // หาก Backend ตอบกลับว่าด่านตรวจสิทธิ์ไม่ผ่าน (Session หมดอายุ หรือ สิทธิ์ไม่พอ)
                     if (resJson.status === 401 || resJson.status === 403) {
                         alert("Session หมดอายุ หรือคุณไม่มีสิทธิ์การใช้งาน กรุณาเข้าสู่ระบบใหม่");
@@ -231,9 +233,9 @@
                     if (cachedSessionStr) {
                         statusBox.innerText = "กำลังกู้คืน Session เดิม...";
                         const cachedSession = JSON.parse(cachedSessionStr);
-                        const resumeRes = await ApiStub.sendRequest(CONFIG.SSO_API_URL, "resume_session", { 
+                        const resumeRes = await ApiStub.sendRequest(CONFIG.SSO_API_URL, "resume_session", {
                             sid: cachedSession.sid,
-                            appCode: CONFIG.APP_CODE 
+                            appCode: CONFIG.APP_CODE
                         });
 
                         if (resumeRes.status === 200) {
@@ -248,14 +250,14 @@
                             // หน่วงเวลา UI เล็กน้อยให้ผู้ใช้เห็นว่าเข้าสำเร็จ
                             await new Promise(resolve => setTimeout(resolve, 800));
 
-                            authorizedUser = { 
-                                lineUserId: cachedSession.lineId, 
-                                firstName: resumeRes.data.userProfile.fullName, 
-                                employeeNo: resumeRes.data.userProfile.employeeNo 
+                            authorizedUser = {
+                                lineUserId: cachedSession.lineId,
+                                firstName: resumeRes.data.userProfile.fullName,
+                                employeeNo: resumeRes.data.userProfile.employeeNo
                             };
-                            
+
                             launchAppWorkspace();
-                            return; 
+                            return;
                         } else {
                             // ถ้า Resume ไม่ผ่าน ให้ลบทิ้ง แล้วทำ Usecase 1 ปกติ
                             localStorage.removeItem("pisd_session");
@@ -273,7 +275,7 @@
 
                     const profile = await liff.getProfile();
                     localStorage.setItem("pisd_profile_pic", profile.pictureUrl);
-                    
+
                     document.getElementById("loadingText").classList.add("hidden");
                     document.getElementById("profileImage").src = profile.pictureUrl;
                     document.getElementById("profileImage").classList.remove("hidden");
@@ -289,10 +291,10 @@
 
                     // เก็บตั๋ว Session ชิ้นใหม่ลงกระเป๋าตาม Usecase 1
                     const authData = s2.data.auth;
-                    localStorage.setItem(`pisd_session`, JSON.stringify({ 
-                        sid: authData.sid, 
-                        exp_dt: authData.exp_dt, 
-                        lineId: profile.userId 
+                    localStorage.setItem(`pisd_session`, JSON.stringify({
+                        sid: authData.sid,
+                        exp_dt: authData.exp_dt,
+                        lineId: profile.userId
                     }));
 
                     // SSO ผ่านการตรวจสอบ
