@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบบันทึกการจับกุมตามหมายจับ - SSO Mode</title>
+    <!-- DaisyUI CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.10.2/dist/full.min.css" rel="stylesheet" type="text/css" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -221,7 +223,30 @@
         <div id="toast" class="fixed bottom-4 right-4 z-50 hidden p-4 rounded-xl text-white shadow-lg"></div>
     </div>
 
+    <!-- DaisyUI Modal -->
+    <dialog id="sysModal" class="modal modal-bottom sm:modal-middle">
+        <div class="modal-box text-center">
+            <h3 class="font-bold text-xl mb-2 text-gray-800" id="modalTitle">แจ้งเตือน</h3>
+            <p class="py-4 text-base text-gray-600" id="modalMessage"></p>
+            <div class="modal-action  justify-center">
+                <form method="dialog" class="w-full">
+                    <button id="modalBtn" class="btn w-full text-white text-lg">ตกลง</button>
+                </form>
+            </div>
+        </div>
+    </dialog>
+
     <script>
+        function sysAlert(message, type = 'info', title = 'แจ้งเตือน', callback = null) {
+            const dialog = document.getElementById('sysModal');
+            const btn = document.getElementById('modalBtn');
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalMessage').innerText = message;
+            btn.className = 'btn w-full text-white text-lg ' + (type === 'error' ? 'btn-error' : type === 'success' ? 'btn-success' : 'btn-info');
+            dialog.onclose = callback ? () => { callback(); dialog.onclose = null; } : null;
+            dialog.showModal();
+        }
+
         (function () {
             const CONFIG = {
                 LIFF_ID: "2009416313-DXQoMEIm",
@@ -251,8 +276,7 @@
 
                     if (result.status === 401 || result.status === 403) {
                         localStorage.removeItem("pisd_session");
-                        alert("เซสซันของคุณหมดอายุ หรือถูกจำกัดสิทธิ์ กรุณาเข้าสู่ระบบใหม่");
-                        location.reload();
+                        sysAlert("เซสซันของคุณหมดอายุ หรือถูกจำกัดสิทธิ์ กรุณาเข้าสู่ระบบใหม่", 'error', 'ตรวจสอบสิทธิ์ล้มเหลว', () => location.reload());
                     }
                     return result;
                 }
@@ -285,10 +309,7 @@
                     if (cachedSessionStr) {
                         statusBox.innerText = "กำลังกู้คืน Session เดิม...";
                         const cachedSession = JSON.parse(cachedSessionStr);
-                        const resumeRes = await ApiStub.sendRequest(CONFIG.SSO_API_URL, "resume_session", { 
-                            sid: cachedSession.sid,
-                            appCode: CONFIG.APP_CODE 
-                        });
+                        const resumeRes = await ApiStub.sendRequest(CONFIG.SSO_API_URL, "resume_session", { sid: cachedSession.sid });
 
                         if (resumeRes.status === 200) {
                             const profilePic = localStorage.getItem("pisd_profile_pic") || "";
@@ -339,8 +360,7 @@
 
                     if (result.status === 401 || result.status === 403) {
                         localStorage.removeItem("pisd_session");
-                        alert("เซสซันการดูข้อมูลหมดอายุ กรุณาเข้าสู่ระบบใหม่");
-                        location.reload();
+                        sysAlert("เซสซันการดูข้อมูลหมดอายุ กรุณาเข้าสู่ระบบใหม่", 'error', 'หมดเวลาดึงข้อมูล', () => location.reload());
                         return;
                     }
 
