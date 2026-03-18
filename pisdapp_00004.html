@@ -5,8 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบทะเบียนหนังสือรับ - SSO Mode</title>
+    <!-- DaisyUI CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.10.2/dist/full.min.css" rel="stylesheet" type="text/css" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script src="/_sdk/data_sdk.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
     <style>
@@ -171,7 +174,30 @@
         </div>
     </div>
 
+    <!-- DaisyUI Modal -->
+    <dialog id="sysModal" class="modal modal-bottom sm:modal-middle">
+        <div class="modal-box text-center">
+            <h3 class="font-bold text-xl mb-2 text-gray-800" id="modalTitle">แจ้งเตือน</h3>
+            <p class="py-4 text-base text-gray-600" id="modalMessage"></p>
+            <div class="modal-action  justify-center">
+                <form method="dialog" class="w-full">
+                    <button id="modalBtn" class="btn w-full text-white text-lg">ตกลง</button>
+                </form>
+            </div>
+        </div>
+    </dialog>
+
     <script>
+        function sysAlert(message, type = 'info', title = 'แจ้งเตือน', callback = null) {
+            const dialog = document.getElementById('sysModal');
+            const btn = document.getElementById('modalBtn');
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalMessage').innerText = message;
+            btn.className = 'btn w-full text-white text-lg ' + (type === 'error' ? 'btn-error' : type === 'success' ? 'btn-success' : 'btn-info');
+            dialog.onclose = callback ? () => { callback(); dialog.onclose = null; } : null;
+            dialog.showModal();
+        }
+
         (function () {
             // ==========================================
             // ⚙️ Configurations
@@ -210,8 +236,9 @@
 
                     // หาก Backend ตอบกลับว่าด่านตรวจสิทธิ์ไม่ผ่าน (Session หมดอายุ หรือ สิทธิ์ไม่พอ)
                     if (resJson.status === 401 || resJson.status === 403) {
-                        alert("Session หมดอายุ หรือคุณไม่มีสิทธิ์การใช้งาน กรุณาเข้าสู่ระบบใหม่");
-                        logout();
+                        sysAlert("Session หมดอายุ หรือคุณไม่มีสิทธิ์การใช้งาน กรุณาเข้าสู่ระบบใหม่", "error", "ตรวจสอบสิทธิ์ล้มเหลว", () => {
+                            logout();
+                        });
                         throw new Error("Unauthorized");
                     }
                     return resJson;
@@ -287,8 +314,11 @@
                     document.getElementById("profileImage").classList.remove("hidden");
                     document.getElementById("displayName").innerText = "สวัสดี, " + profile.displayName;
 
-                    // ไม่ต้องเรียก liff_auth ซ้ำซ้อน ยิง sso_auth ทีเดียวจบ
-                    statusBox.innerText = "กำลังยืนยันสิทธิ์ SSO กับฐานข้อมูลกลาง...";
+                    statusBox.innerText = "กำลังยืนยันสิทธิ์ SSO (Step 1)...";
+                    const res1 = await ApiStub.sendRequest(CONFIG.SSO_API_URL, "liff_auth", { lineUserId: profile.userId });
+                    if (res1.status !== 200) throw new Error(res1.message);
+
+                    statusBox.innerText = "กำลังตรวจสอบสิทธิ์แอป (Step 2)...";
                     const res2 = await ApiStub.sendRequest(CONFIG.SSO_API_URL, "sso_auth", { lineUserId: profile.userId, appCode: CONFIG.APP_CODE });
                     if (res2.status !== 200) throw new Error(res2.message);
 
@@ -312,7 +342,6 @@
             }
 
             function launchAppWorkspace() {
-                alert("✅ ผ่านระบบ Authentication & Authorization (SSO) สำเร็จ!");
                 document.getElementById("loginPage").classList.add("hidden");
                 document.getElementById("mainApp").classList.remove("hidden");
                 document.getElementById("officerInfo").innerText = `เจ้าหน้าที่: คุณ${authorizedUser.firstName} (${authorizedUser.employeeNo})`;
@@ -365,7 +394,7 @@
                         document.getElementById('document-form').reset();
                         getNextRegNumber();
                     } else throw new Error(res.message);
-                } catch (err) { alert("เกิดข้อผิดพลาด: " + err.message); }
+                } catch (err) { sysAlert("เกิดข้อผิดพลาด: " + err.message, "error", "ข้อผิดพลาด"); }
                 finally { btn.disabled = false; btn.innerText = "บันทึกข้อมูล"; }
             }
 
