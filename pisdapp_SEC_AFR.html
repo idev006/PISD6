@@ -102,7 +102,7 @@
                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
 
                     <!-- Menu 1 (Primary Menu provided by User) -->
-                    <a href="https://liff.line.me/2009416313-hHVNF27C"
+                    <a href="https://liff.line.me/2009416313-gtUQHyZ7"
                         class="card bg-white card-shadow hover:-translate-y-1 transition-transform duration-300 cursor-pointer border border-emerald-50">
                         <div class="card-body items-center text-center p-4">
                             <div
@@ -113,7 +113,7 @@
                                     </path>
                                 </svg>
                             </div>
-                            <h3 class="font-semibold text-sm text-gray-800 line-clamp-2">งานความมั่นคง</h3>
+                            <h3 class="font-semibold text-sm text-gray-800 line-clamp-2">บันทึกข้อมูลความเคลื่อนไหว</h3>
                         </div>
                     </a>
 
@@ -279,7 +279,7 @@
                     statusBox.innerText = "กำลังยืนยันสิทธิ์ SSO กับฐานข้อมูลกลาง...";
                     // ⚡ (Optimized): ยิง sso_auth ตัวเดียวจบ ระบบฝั่ง Server จะแสกนทั้งตัว User Status และ App Status ให้
                     const res2 = await ApiStub.sendRequest(CONFIG.SSO_API_URL, "sso_auth", { lineUserId: profile.userId, appCode: CONFIG.APP_CODE });
-                    
+
                     if (res2.status !== 200) throw new Error(res2.message);
 
                     const authData = res2.data.auth;
