@@ -324,15 +324,7 @@
 
             async function fetchNextRegisterNo() {
                 try {
-                    let url = `${CONFIG.DATA_API_URL}?action=getNextRegisterNo`;
-                    const sessionStr = localStorage.getItem("pisd_session");
-                    if (sessionStr) {
-                        try { url += "&sid=" + JSON.parse(sessionStr).sid; } catch (e) { }
-                    }
-                    const res = await fetch(url).then(r => r.json());
-                    if (res.status === 401 || res.status === 403) {
-                        logout(); return;
-                    }
+                    const res = await fetch(`${CONFIG.DATA_API_URL}?action=getNextRegisterNo`).then(r => r.json());
                     if (res.success) document.getElementById('register-no').value = res.nextNo;
                 } catch (e) { console.error("Load Register No Fail", e); }
             }
@@ -379,15 +371,7 @@
                 const tbody = document.getElementById("report-table-body");
                 tbody.innerHTML = '<tr><td class="p-4 text-center">กำลังดึงข้อมูล...</td></tr>';
                 try {
-                    let url = `${CONFIG.DATA_API_URL}?action=getData`;
-                    const sessionStr = localStorage.getItem("pisd_session");
-                    if (sessionStr) {
-                        try { url += "&sid=" + JSON.parse(sessionStr).sid; } catch (e) { }
-                    }
-                    const res = await fetch(url).then(r => r.json());
-                    if (res.status === 401 || res.status === 403) {
-                        logout(); return;
-                    }
+                    const res = await fetch(`${CONFIG.DATA_API_URL}?action=getData`).then(r => r.json());
                     if (res.success && res.data) {
                         tbody.innerHTML = res.data.slice(0, 10).map((r, i) => `
               <tr class="border-b">
