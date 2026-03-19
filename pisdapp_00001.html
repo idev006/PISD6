@@ -155,15 +155,39 @@
             let dashboardData = [];
             let pieChart = null, barChart = null;
 
+            function logout() {
+                localStorage.removeItem("pisd_session");
+                localStorage.removeItem("pisd_profile_pic");
+                location.reload();
+            }
+
             const ApiStub = {
-                async sendRequest(url, action, payloadData) {
+                async sendRequest(url, action, payloadData = {}) {
+                    // แนบ SID ถ้ายิงเข้า DATA_API (ป้องกันเซิร์ฟเวอร์ปฏิเสธ)
+                    const sessionStr = localStorage.getItem("pisd_session");
+                    if (sessionStr && url === CONFIG.DATA_API_URL) {
+                        try {
+                            const session = JSON.parse(sessionStr);
+                            if (session.sid && !payloadData.sid) {
+                                payloadData.sid = session.sid;
+                            }
+                        } catch (e) { }
+                    }
+
                     const payload = { action: action, payload: payloadData };
                     const response = await fetch(url, {
                         method: "POST",
                         body: JSON.stringify(payload),
                         headers: { "Content-Type": "text/plain;charset=utf-8" }
                     });
-                    return await response.json();
+                    const resJson = await response.json();
+
+                    if (resJson.status === 401 || resJson.status === 403) {
+                        alert("Session หมดอายุ หรือคุณไม่มีสิทธิ์การใช้งาน กรุณาเข้าสู่ระบบใหม่");
+                        logout();
+                        throw new Error("Unauthorized");
+                    }
+                    return resJson;
                 }
             };
 
@@ -171,33 +195,88 @@
                 const statusBox = document.getElementById("statusBox");
                 try {
                     statusBox.classList.remove("hidden");
+
+                    // 1. ลองกู้คืน Session เดิม
+                    const cachedSessionStr = localStorage.getItem("pisd_session");
+                    if (cachedSessionStr) {
+                        statusBox.innerText = "กำลังกู้คืน Session เดิม...";
+                        const cachedSession = JSON.parse(cachedSessionStr);
+                        const resumeRes = await ApiStub.sendRequest(CONFIG.SSO_API_URL, "resume_session", {
+                            sid: cachedSession.sid,
+                            appCode: CONFIG.APP_CODE
+                        });
+
+                        if (resumeRes.status === 200) {
+                            const profilePic = localStorage.getItem("pisd_profile_pic") || "";
+                            document.getElementById("loadingText").style.display = "none";
+                            if (profilePic) {
+                                document.getElementById("profileImage").src = profilePic;
+                                document.getElementById("profileImage").classList.remove("hidden");
+                            }
+                            
+                            const fName = resumeRes.data.userProfile?.fullName || resumeRes.data.firstName || "เจ้าหน้าที่";
+                            const empNo = resumeRes.data.userProfile?.employeeNo || resumeRes.data.employeeNo || "";
+                            document.getElementById("displayName").innerText = "ยินดีต้อนรับกลับ, " + fName;
+
+                            authorizedUser = {
+                                lineUserId: cachedSession.lineId,
+                                firstName: fName,
+                                employeeNo: empNo
+                            };
+
+                            await new Promise(r => setTimeout(r, 800)); // หน่วง UI ให้เห็นว่ากู้คืนสำเร็จ
+                            launchAppWorkspace();
+                            return;
+                        } else {
+                            // ถ้าข้อมูลเสีย, หมดอายุ, หรือถูกระงับ
+                            localStorage.removeItem("pisd_session");
+                            localStorage.removeItem("pisd_profile_pic");
+                        }
+                    }
+
+                    // 2. ถ้ากู้ไม่ได้ ให้ไปที่ LINE SDK
                     statusBox.innerText = "กำลังเชื่อมต่อ LINE SDK...";
                     await liff.init({ liffId: CONFIG.LIFF_ID });
                     if (!liff.isLoggedIn()) { liff.login(); return; }
 
                     const profile = await liff.getProfile();
+                    localStorage.setItem("pisd_profile_pic", profile.pictureUrl);
+                    
                     document.getElementById("loadingText").style.display = "none";
                     document.getElementById("profileImage").src = profile.pictureUrl;
                     document.getElementById("profileImage").classList.remove("hidden");
                     document.getElementById("displayName").innerText = "สวัสดี, " + profile.displayName;
 
-                    statusBox.innerText = "ยืนยันสิทธิ์ SSO...";
-                    const s1 = await ApiStub.sendRequest(CONFIG.SSO_API_URL, "liff_auth", { lineUserId: profile.userId });
-                    if (s1.status !== 200) throw new Error(s1.message);
-
+                    statusBox.innerText = "กำลังยืนยันสิทธิ์ SSO กับส่วนกลาง...";
+                    // ไม่ต้องยิง liff_auth ซ้ำ เรียกตัว sso_auth ตัวเดียว
                     const s2 = await ApiStub.sendRequest(CONFIG.SSO_API_URL, "sso_auth", { lineUserId: profile.userId, appCode: CONFIG.APP_CODE });
                     if (s2.status !== 200) throw new Error(s2.message);
 
-                    authorizedUser = { lineUserId: profile.userId, firstName: s2.data.firstName, employeeNo: s2.data.employeeNo };
-                    document.getElementById("loginScreen").classList.add("hidden");
-                    document.getElementById("mainApp").classList.remove("hidden");
-                    document.getElementById("reporterInfo").innerText = `ผู้รายงาน: คุณ${authorizedUser.firstName} (${authorizedUser.employeeNo})`;
+                    // เก็บตั๋ว Session ชิ้นใหม่ลงกระเป๋า
+                    const authData = s2.data.auth;
+                    localStorage.setItem("pisd_session", JSON.stringify({
+                        sid: authData.sid,
+                        exp_dt: authData.exp_dt,
+                        lineId: profile.userId
+                    }));
 
-                    setupFormUI();
+                    const fName = s2.data.userProfile?.fullName || s2.data.firstName || s2.data.userProfile?.fullName || "";
+                    const empNo = s2.data.userProfile?.employeeNo || s2.data.employeeNo || s2.data.userProfile?.employeeNo || "";
+
+                    authorizedUser = { lineUserId: profile.userId, firstName: fName, employeeNo: empNo };
+                    
+                    launchAppWorkspace();
                 } catch (err) {
                     statusBox.innerHTML = `<span class="text-red-600 font-bold">❌ Error:</span> ${err.message}`;
                     document.getElementById("btnRetry").classList.remove("hidden");
                 }
+            }
+            
+            function launchAppWorkspace() {
+                document.getElementById("loginScreen").classList.add("hidden");
+                document.getElementById("mainApp").classList.remove("hidden");
+                document.getElementById("reporterInfo").innerText = `ผู้รายงาน: คุณ${authorizedUser.firstName} (${authorizedUser.employeeNo})`;
+                setupFormUI();
             }
 
             async function loadDashboard() {
