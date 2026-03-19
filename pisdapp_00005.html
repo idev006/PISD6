@@ -5,8 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบทะเบียนหนังสือส่ง - SSO Mode</title>
-    <!-- DaisyUI CDN -->
-    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.10.2/dist/full.min.css" rel="stylesheet" type="text/css" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <script src="/_sdk/data_sdk.js"></script>
@@ -64,7 +62,7 @@
             <div class="w-full max-w-md">
                 <div class="bg-white rounded-3xl shadow-2xl p-8 text-center">
                     <h2 class="text-2xl font-bold text-green-800 mb-2">PISD6 SSO Portal</h2>
-                    <p class="text-gray-500 text-sm mb-6">::ระบบทะเบียนหนังสือส่ง งานสารบรรณ</p>
+                    <p class="text-gray-500 text-sm mb-6">ระบบทะเบียนหนังสือส่ง งานสารบรรณ</p>
 
                     <div id="authFlow">
                         <p id="loadingText" class="text-green-600 font-semibold animate-pulse">กำลังตรวจสอบสิทธิ์ผ่าน
@@ -168,36 +166,13 @@
         </div>
     </div>
 
-    <!-- DaisyUI Modal -->
-    <dialog id="sysModal" class="modal modal-bottom sm:modal-middle">
-        <div class="modal-box text-center">
-            <h3 class="font-bold text-xl mb-2 text-gray-800" id="modalTitle">แจ้งเตือน</h3>
-            <p class="py-4 text-base text-gray-600" id="modalMessage"></p>
-            <div class="modal-action  justify-center">
-                <form method="dialog" class="w-full">
-                    <button id="modalBtn" class="btn w-full text-white text-lg">ตกลง</button>
-                </form>
-            </div>
-        </div>
-    </dialog>
-
     <script>
-        function sysAlert(message, type = 'info', title = 'แจ้งเตือน', callback = null) {
-            const dialog = document.getElementById('sysModal');
-            const btn = document.getElementById('modalBtn');
-            document.getElementById('modalTitle').innerText = title;
-            document.getElementById('modalMessage').innerText = message;
-            btn.className = 'btn w-full text-white text-lg ' + (type === 'error' ? 'btn-error' : type === 'success' ? 'btn-success' : 'btn-info');
-            dialog.onclose = callback ? () => { callback(); dialog.onclose = null; } : null;
-            dialog.showModal();
-        }
-
         (function () {
             // ==========================================
             // ⚙️ Configurations
             // ==========================================
             const CONFIG = {
-                LIFF_ID: "2009416313-TSCxm4Sp", // LIFF ID ประจำกลุ่ม 
+                LIFF_ID: "2009416313-4bWJ4px8", // LIFF ID ประจำกลุ่ม
                 SSO_API_URL: "https://script.google.com/macros/s/AKfycbwyI-KJlJzK1kKLkArN5aTgI5mefFJWbNXxvFG8jC011zn49lNAIkmm6BY1FMWYHuP6/exec",
                 DATA_API_URL: "https://script.google.com/macros/s/AKfycbzzxyfAe_ulkkSzbDMpB_r3zs8myRaPM7R1XnAgkXrIU_B1p60BMe-OjSs0j6tHUE_G_w/exec",
                 APP_CODE: "pisdapp_00005"
@@ -206,43 +181,16 @@
             let authorizedUser = null;
 
             const ApiStub = {
-                async sendRequest(url, action, payloadData = {}) {
-                    // แนบ SID ของรอบก่อนหน้าไปกับทุก Request ฝั่ง Data (ถ้ามี)
-                    const sessionStr = localStorage.getItem("pisd_session");
-                    if (sessionStr && url === CONFIG.DATA_API_URL) {
-                        try {
-                            const session = JSON.parse(sessionStr);
-                            if (session.sid && !payloadData.sid) {
-                                payloadData.sid = session.sid;
-                            }
-                        } catch (e) { console.warn("Invalid session format"); }
-                    }
-
+                async sendRequest(url, action, payloadData) {
                     const payload = { action, payload: payloadData };
                     const response = await fetch(url, {
                         method: "POST",
                         body: JSON.stringify(payload),
                         headers: { "Content-Type": "text/plain;charset=utf-8" } // เลี่ยงปัญหา CORS
                     });
-
-                    const resJson = await response.json();
-
-                    // หาก Backend ตอบกลับว่าด่านตรวจสิทธิ์ไม่ผ่าน (Session หมดอายุ หรือ สิทธิ์ไม่พอ)
-                    if (resJson.status === 401 || resJson.status === 403) {
-                        sysAlert("Session หมดอายุ หรือคุณไม่มีสิทธิ์การใช้งาน กรุณาเข้าสู่ระบบใหม่", "error", "ตรวจสอบสิทธิ์ล้มเหลว", () => {
-                            logout();
-                        });
-                        throw new Error("Unauthorized");
-                    }
-                    return resJson;
+                    return await response.json();
                 }
             };
-
-            function logout() {
-                localStorage.removeItem("pisd_session");
-                localStorage.removeItem("pisd_profile_pic");
-                location.reload();
-            }
 
             // ==========================================
             // 🔐 Authentication Flow (LINE SSO)
@@ -251,92 +199,37 @@
                 const statusBox = document.getElementById("statusBox");
                 try {
                     statusBox.classList.remove("hidden");
-
-                    // ----------------------------------------------------------------
-                    // Usecase 2: ตรวจสอบ Session Resumption จาก LocalStorage ก่อน
-                    // ----------------------------------------------------------------
-                    const cachedSessionStr = localStorage.getItem("pisd_session");
-                    if (cachedSessionStr) {
-                        statusBox.innerText = "กำลังกู้คืน Session เดิม...";
-                        const cachedSession = JSON.parse(cachedSessionStr);
-                        const resumeRes = await ApiStub.sendRequest(CONFIG.SSO_API_URL, "resume_session", {
-                            sid: cachedSession.sid,
-                            appCode: CONFIG.APP_CODE
-                        });
-
-                        if (resumeRes.status === 200) {
-                            const profilePic = localStorage.getItem("pisd_profile_pic") || "";
-                            document.getElementById("loadingText").classList.add("hidden");
-                            if (profilePic) {
-                                document.getElementById("profileImage").src = profilePic;
-                                document.getElementById("profileImage").classList.remove("hidden");
-                            }
-                            document.getElementById("displayName").innerText = "ยินดีต้อนรับกลับ, " + resumeRes.data.userProfile.fullName;
-
-                            // หน่วงเวลา UI เล็กน้อยให้ผู้ใช้เห็นว่าเข้าสำเร็จ
-                            await new Promise(resolve => setTimeout(resolve, 800));
-
-                            authorizedUser = {
-                                lineUserId: cachedSession.lineId,
-                                firstName: resumeRes.data.userProfile.fullName,
-                                employeeNo: resumeRes.data.userProfile.employeeNo
-                            };
-
-                            launchAppWorkspace();
-                            return;
-                        } else {
-                            // ถ้า Resume ไม่ผ่าน ให้ลบทิ้ง แล้วทำ Usecase 1 ปกติ
-                            localStorage.removeItem("pisd_session");
-                            localStorage.removeItem("pisd_profile_pic");
-                        }
-                    }
-
-                    // ----------------------------------------------------------------
-                    // Usecase 1: ถ้าไม่เคยล็อกอิน หรือ Session พัง ให้เปิด LINE SDK ใหม่
-                    // ----------------------------------------------------------------
                     statusBox.innerText = "กำลังเชื่อมต่อ LINE LIFF...";
 
                     await liff.init({ liffId: CONFIG.LIFF_ID });
                     if (!liff.isLoggedIn()) { liff.login(); return; }
 
                     const profile = await liff.getProfile();
-                    localStorage.setItem("pisd_profile_pic", profile.pictureUrl);
-
                     document.getElementById("loadingText").classList.add("hidden");
                     document.getElementById("profileImage").src = profile.pictureUrl;
                     document.getElementById("profileImage").classList.remove("hidden");
                     document.getElementById("displayName").innerText = "สวัสดี, " + profile.displayName;
 
-                    statusBox.innerText = "กำลังยืนยันสิทธิ์ SSO กับฐานข้อมูลกลาง...";
-                    // ⚡ (Optimized): ยิง sso_auth ตัวเดียวจบ ระบบฝั่ง Server จะแสกนทั้งตัว User Status และ App Status ให้
+                    statusBox.innerText = "กำลังตรวจสอบสถานะบัญชี (Step 1)...";
+                    const s1 = await ApiStub.sendRequest(CONFIG.SSO_API_URL, "liff_auth", { lineUserId: profile.userId });
+                    if (s1.status !== 200) throw new Error(s1.message);
+
+                    statusBox.innerText = "กำลังตรวจสอบสิทธิ์เข้าถึง (Step 2)...";
                     const s2 = await ApiStub.sendRequest(CONFIG.SSO_API_URL, "sso_auth", { lineUserId: profile.userId, appCode: CONFIG.APP_CODE });
                     if (s2.status !== 200) throw new Error(s2.message);
 
-                    // เก็บตั๋ว Session ชิ้นใหม่ลงกระเป๋าตาม Usecase 1
-                    const authData = s2.data.auth;
-                    localStorage.setItem(`pisd_session`, JSON.stringify({
-                        sid: authData.sid,
-                        exp_dt: authData.exp_dt,
-                        lineId: profile.userId
-                    }));
-
                     // SSO ผ่านการตรวจสอบ
-                    authorizedUser = { lineUserId: profile.userId, firstName: s2.data.userProfile.fullName, employeeNo: s2.data.userProfile.employeeNo };
+                    authorizedUser = { lineUserId: profile.userId, firstName: s2.data.firstName, employeeNo: s2.data.employeeNo };
 
-                    launchAppWorkspace();
+                    document.getElementById("loginPage").classList.add("hidden");
+                    document.getElementById("mainApp").classList.remove("hidden");
+                    document.getElementById("officerDisplay").innerText = `เจ้าหน้าที่: คุณ${authorizedUser.firstName} (${authorizedUser.employeeNo})`;
 
+                    initApp();
                 } catch (err) {
                     statusBox.innerHTML = `<span class="text-red-600 font-bold">❌ Error:</span> ${err.message}`;
                     document.getElementById("btnRetry").classList.remove("hidden");
                 }
-            }
-
-            function launchAppWorkspace() {
-                document.getElementById("loginPage").classList.add("hidden");
-                document.getElementById("mainApp").classList.remove("hidden");
-                document.getElementById("officerDisplay").innerText = `เจ้าหน้าที่: คุณ${authorizedUser.firstName} (${authorizedUser.employeeNo})`;
-
-                initApp();
             }
 
             // ==========================================
@@ -384,7 +277,7 @@
                         document.getElementById('document-form').reset();
                         fetchNextRegisterNo();
                     } else throw new Error(res.message);
-                } catch (err) { sysAlert("เกิดข้อผิดพลาด: " + err.message, "error", "ข้อผิดพลาด"); }
+                } catch (err) { alert("เกิดข้อผิดพลาด: " + err.message); }
                 finally { btn.disabled = false; btn.innerText = "บันทึกข้อมูล"; }
             }
 
