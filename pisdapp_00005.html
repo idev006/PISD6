@@ -91,15 +91,20 @@
                         </div>
                         <div>
                             <h1 class="text-2xl font-bold tracking-wide drop-shadow">ระบบทะเบียนหนังสือส่ง</h1>
-                            <p id="officerDisplay" class="text-green-50 text-sm md:text-base font-medium drop-shadow"></p>
+                            <p id="officerDisplay" class="text-green-50 text-sm md:text-base font-medium drop-shadow">
+                            </p>
                         </div>
                     </div>
                     <div class="flex gap-4 items-center">
                         <div class="text-right hidden md:block">
                             <p id="current-date" class="text-sm font-semibold"></p>
                         </div>
-                        <a href="https://liff.line.me/2009416313-yfoJaKGr" class="flex items-center gap-2 bg-white/20 hover:bg-white/30 px-3 py-2 rounded-lg transition-colors backdrop-blur text-sm font-semibold text-white">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                        <a href="https://liff.line.me/2009416313-yfoJaKGr"
+                            class="flex items-center gap-2 bg-white/20 hover:bg-white/30 px-3 py-2 rounded-lg transition-colors backdrop-blur text-sm font-semibold text-white">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                            </svg>
                             <span class="hidden sm:inline">กลับเมนูหลัก</span>
                         </a>
                     </div>
@@ -207,9 +212,9 @@
                         body: JSON.stringify(payload),
                         headers: { "Content-Type": "text/plain;charset=utf-8" } // เลี่ยงปัญหา CORS
                     });
-                    
+
                     const resJson = await response.json();
-                    
+
                     if (resJson.status === 401 || resJson.status === 403) {
                         alert("Session หมดอายุ หรือคุณไม่มีสิทธิ์การใช้งาน กรุณาเข้าสู่ระบบใหม่");
                         logout();
@@ -243,7 +248,7 @@
                                 document.getElementById("profileImage").src = profilePic;
                                 document.getElementById("profileImage").classList.remove("hidden");
                             }
-                            
+
                             const fName = resumeRes.data.userProfile?.fullName || resumeRes.data.firstName || "เจ้าหน้าที่";
                             const empNo = resumeRes.data.userProfile?.employeeNo || resumeRes.data.employeeNo || "";
                             document.getElementById("displayName").innerText = "ยินดีต้อนรับกลับ, " + fName;
