@@ -213,7 +213,7 @@
                                 document.getElementById("profileImage").src = profilePic;
                                 document.getElementById("profileImage").classList.remove("hidden");
                             }
-                            
+
                             const fName = resumeRes.data.userProfile?.fullName || resumeRes.data.firstName || "เจ้าหน้าที่";
                             const empNo = resumeRes.data.userProfile?.employeeNo || resumeRes.data.employeeNo || "";
                             document.getElementById("displayName").innerText = "ยินดีต้อนรับกลับ, " + fName;
@@ -241,7 +241,7 @@
 
                     const profile = await liff.getProfile();
                     localStorage.setItem("pisd_profile_pic", profile.pictureUrl);
-                    
+
                     document.getElementById("loadingText").style.display = "none";
                     document.getElementById("profileImage").src = profile.pictureUrl;
                     document.getElementById("profileImage").classList.remove("hidden");
@@ -264,14 +264,14 @@
                     const empNo = s2.data.userProfile?.employeeNo || s2.data.employeeNo || s2.data.userProfile?.employeeNo || "";
 
                     authorizedUser = { lineUserId: profile.userId, firstName: fName, employeeNo: empNo };
-                    
+
                     launchAppWorkspace();
                 } catch (err) {
                     statusBox.innerHTML = `<span class="text-red-600 font-bold">❌ Error:</span> ${err.message}`;
                     document.getElementById("btnRetry").classList.remove("hidden");
                 }
             }
-            
+
             function launchAppWorkspace() {
                 document.getElementById("loginScreen").classList.add("hidden");
                 document.getElementById("mainApp").classList.remove("hidden");
