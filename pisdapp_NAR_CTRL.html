@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="th" class="h-full">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบงานยาเสพติด - SSO Mode</title>
+    <!-- DaisyUI CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.10.2/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+            box-sizing: border-box;
+        }
+
+        .gradient-header {
+            /* Narcotics Control themed gradient (Amber/Orange) */
+            background: linear-gradient(135deg, #b45309 0%, #d97706 50%, #f59e0b 100%);
+        }
+
+        .card-shadow {
+            box-shadow: 0 4px 15px rgba(217, 119, 6, 0.1);
+        }
+
+        .profile-img {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 4px solid #fff;
+            object-fit: cover;
+            margin: 0 auto 1.5rem;
+        }
+    </style>
+</head>
+
+<body class="h-full bg-slate-50">
+    <div id="app" class="h-full w-full overflow-auto">
+
+        <!-- Login Page -->
+        <div id="loginPage" class="min-h-full flex items-center justify-center p-4 gradient-header">
+            <div class="w-full max-w-md">
+                <div class="bg-white rounded-3xl shadow-2xl p-8 text-center">
+                    <h2 class="text-2xl font-bold text-amber-800 mb-2">PISD6 SSO Portal</h2>
+                    <p class="text-gray-500 text-sm mb-6">ระบบงานยาเสพติด (Narcotics Control)</p>
+
+                    <div id="authFlow">
+                        <p id="loadingText" class="text-amber-500 font-semibold animate-pulse">กำลังตรวจสอบสิทธิ์ด้วย
+                            LINE...</p>
+                        <img id="profileImage" class="profile-img hidden shadow-lg" src="" alt="Profile">
+                        <h3 id="displayName" class="text-xl font-bold text-gray-800"></h3>
+
+                        <div id="statusBox"
+                            class="hidden mt-4 bg-gray-50 p-4 rounded-2xl text-left text-sm border-l-4 border-amber-500">
+                        </div>
+                        <button id="btnRetry"
+                            class="hidden w-full mt-4 bg-amber-600 text-white py-3 rounded-xl font-bold hover:bg-amber-700 transition">ลองใหม่อีกครั้ง</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main App (Dashboard) -->
+        <div id="mainApp" class="hidden min-h-full flex flex-col">
+            <header class="gradient-header text-white py-6 px-4 shadow-lg">
+                <div class="max-w-7xl mx-auto flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div class="bg-white/20 p-3 rounded-full">
+                            <!-- Warning/Alert/Pill icon representing Narcotics Ops -->
+                            <svg class="w-10 h-10" fill="none" stroke="currentColor" stroke-width="2"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z">
+                                </path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h1 class="text-2xl font-bold tracking-wide">ระบบงานยาเสพติด</h1>
+                            <p id="officerInfo" class="text-amber-100 text-xs md:text-sm font-medium"></p>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-8">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold text-gray-800">เมนูระบบงานยาเสพติด</h2>
+                    <p class="text-gray-500">กรุณาเลือกระบบงานที่ต้องการปฏิบัติหน้าที่ (Narcotics Control)</p>
+                </div>
+
+                <!-- 
+                    Responsive Grid Rules:
+                    - <= 639px (xs): grid-cols-2
+                    - >= 640px (sm): grid-cols-3
+                    - >= 768px (md): grid-cols-4
+                    - >= 1024px (lg): grid-cols-6
+                    - >= 1280px (xl): grid-cols-8
+                -->
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
+
+                    <!-- Menu 1 (Primary Menu provided by User) -->
+                    <a href="https://liff.line.me/2009416313-ZIFbD3XU"
+                        class="card bg-white card-shadow hover:-translate-y-1 transition-transform duration-300 cursor-pointer border border-amber-50">
+                        <div class="card-body items-center text-center p-4">
+                            <div
+                                class="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mb-2">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 10V3L4 14h7v7l9-11h-7z">
+                                    </path>
+                                </svg>
+                            </div>
+                            <h3 class="font-semibold text-sm text-gray-800 line-clamp-2">งานยาเสพติด</h3>
+                        </div>
+                    </a>
+
+                    <!-- Mock Menu 2 -->
+                    <a href="#"
+                        class="card bg-white card-shadow hover:-translate-y-1 transition-transform duration-300 cursor-pointer border border-amber-50">
+                        <div class="card-body items-center text-center p-4">
+                            <div
+                                class="w-12 h-12 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mb-2">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                    </path>
+                                </svg>
+                            </div>
+                            <h3 class="font-semibold text-sm text-gray-800 line-clamp-2">บันทึกการตรวจยึด</h3>
+                        </div>
+                    </a>
+
+                    <!-- Mock Menu 3 -->
+                    <a href="#"
+                        class="card bg-white card-shadow hover:-translate-y-1 transition-transform duration-300 cursor-pointer border border-amber-50">
+                        <div class="card-body items-center text-center p-4">
+                            <div
+                                class="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-2">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z">
+                                    </path>
+                                </svg>
+                            </div>
+                            <h3 class="font-semibold text-sm text-gray-800 line-clamp-2">เครือข่ายผู้กระทำผิด</h3>
+                        </div>
+                    </a>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- DaisyUI Modal -->
+    <dialog id="sysModal" class="modal modal-bottom sm:modal-middle">
+        <div class="modal-box text-center">
+            <h3 class="font-bold text-xl mb-2 text-gray-800" id="modalTitle">แจ้งเตือน</h3>
+            <p class="py-4 text-base text-gray-600" id="modalMessage"></p>
+            <div class="modal-action  justify-center">
+                <form method="dialog" class="w-full">
+                    <button id="modalBtn" class="btn w-full text-white text-lg">ตกลง</button>
+                </form>
+            </div>
+        </div>
+    </dialog>
+
+    <script>
+        function sysAlert(message, type = 'info', title = 'แจ้งเตือน', callback = null) {
+            const dialog = document.getElementById('sysModal');
+            const btn = document.getElementById('modalBtn');
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalMessage').innerText = message;
+            btn.className = 'btn w-full text-white text-lg ' + (type === 'error' ? 'btn-error' : type === 'success' ? 'btn-success' : 'btn-info');
+            dialog.onclose = callback ? () => { callback(); dialog.onclose = null; } : null;
+            dialog.showModal();
+        }
+
+        function logout() {
+            localStorage.removeItem("pisd_session");
+            localStorage.removeItem("pisd_profile_pic");
+            location.reload();
+        }
+
+        (function () {
+            // ==========================================
+            // ⚙️ Configurations
+            // ==========================================
+            const CONFIG = {
+                // LIFF ID for NAR_CTRL application
+                LIFF_ID: "2009416313-ZIFbD3XU",
+                SSO_API_URL: "https://script.google.com/macros/s/AKfycbwyI-KJlJzK1kKLkArN5aTgI5mefFJWbNXxvFG8jC011zn49lNAIkmm6BY1FMWYHuP6/exec",
+                APP_CODE: "pisdapp_NAR_CTRL" // รหัสแอประบบงานยาเสพติด
+            };
+
+            let authorizedUser = null;
+
+            const ApiStub = {
+                async sendRequest(url, action, payloadData = {}) {
+                    const payload = { action, payload: payloadData };
+                    const response = await fetch(url, {
+                        method: "POST",
+                        body: JSON.stringify(payload),
+                        headers: { "Content-Type": "text/plain;charset=utf-8" }
+                    });
+                    const resJson = await response.json();
+                    if (resJson.status === 401 || resJson.status === 403) {
+                        sysAlert("Session หมดอายุ หรือคุณไม่มีสิทธิ์การใช้งาน กรุณาเข้าสู่ระบบใหม่", "error", "ตรวจสอบสิทธิ์ล้มเหลว", () => {
+                            logout();
+                        });
+                        throw new Error("Unauthorized");
+                    }
+                    return resJson;
+                }
+            };
+
+            // ==========================================
+            // 🔐 SSO Core Logic
+            // ==========================================
+            async function startSSO() {
+                const statusBox = document.getElementById("statusBox");
+                try {
+                    statusBox.classList.remove("hidden");
+
+                    // ----------------------------------------------------------------
+                    // Usecase 2: ตรวจสอบ Session Resumption 
+                    // ----------------------------------------------------------------
+                    const cachedSessionStr = localStorage.getItem("pisd_session");
+                    if (cachedSessionStr) {
+                        statusBox.innerText = "กำลังกู้คืน Session เดิม...";
+                        const cachedSession = JSON.parse(cachedSessionStr);
+                        const resumeRes = await ApiStub.sendRequest(CONFIG.SSO_API_URL, "resume_session", {
+                            sid: cachedSession.sid,
+                            appCode: CONFIG.APP_CODE
+                        });
+
+                        if (resumeRes.status === 200) {
+                            const profilePic = localStorage.getItem("pisd_profile_pic") || "";
+                            document.getElementById("loadingText").classList.add("hidden");
+                            if (profilePic) {
+                                document.getElementById("profileImage").src = profilePic;
+                                document.getElementById("profileImage").classList.remove("hidden");
+                            }
+                            document.getElementById("displayName").innerText = "ยินดีต้อนรับกลับ, " + resumeRes.data.userProfile.fullName;
+
+                            await new Promise(resolve => setTimeout(resolve, 800));
+
+                            authorizedUser = {
+                                lineUserId: cachedSession.lineId,
+                                firstName: resumeRes.data.userProfile.fullName,
+                                employeeNo: resumeRes.data.userProfile.employeeNo
+                            };
+
+                            launchAppWorkspace();
+                            return;
+                        } else {
+                            localStorage.removeItem("pisd_session");
+                            localStorage.removeItem("pisd_profile_pic");
+                        }
+                    }
+
+                    // ----------------------------------------------------------------
+                    // Usecase 1: LINE SDK
+                    // ----------------------------------------------------------------
+                    statusBox.innerText = "กำลังตรวจสอบตัวตน LINE...";
+
+                    await liff.init({ liffId: CONFIG.LIFF_ID });
+                    if (!liff.isLoggedIn()) { liff.login(); return; }
+
+                    const profile = await liff.getProfile();
+                    localStorage.setItem("pisd_profile_pic", profile.pictureUrl);
+
+                    document.getElementById("loadingText").classList.add("hidden");
+                    document.getElementById("profileImage").src = profile.pictureUrl;
+                    document.getElementById("profileImage").classList.remove("hidden");
+                    document.getElementById("displayName").innerText = "สวัสดี, " + profile.displayName;
+
+                    statusBox.innerText = "กำลังยืนยันสิทธิ์ SSO กับฐานข้อมูลกลาง...";
+                    // ⚡ (Optimized): ยิง sso_auth ตัวเดียวจบ ระบบฝั่ง Server จะแสกนทั้งตัว User Status และ App Status ให้
+                    const res2 = await ApiStub.sendRequest(CONFIG.SSO_API_URL, "sso_auth", { lineUserId: profile.userId, appCode: CONFIG.APP_CODE });
+                    
+                    if (res2.status !== 200) throw new Error(res2.message);
+
+                    const authData = res2.data.auth;
+                    localStorage.setItem(`pisd_session`, JSON.stringify({
+                        sid: authData.sid,
+                        exp_dt: authData.exp_dt,
+                        lineId: profile.userId
+                    }));
+
+                    authorizedUser = { lineUserId: profile.userId, firstName: res2.data.userProfile.fullName, employeeNo: res2.data.userProfile.employeeNo };
+                    launchAppWorkspace();
+
+                } catch (err) {
+                    statusBox.innerHTML = `<span class="text-red-600 font-bold">❌ Error:</span> ${err.message}`;
+                    document.getElementById("btnRetry").classList.remove("hidden");
+                }
+            }
+
+            function launchAppWorkspace() {
+                document.getElementById("loginPage").classList.add("hidden");
+                document.getElementById("mainApp").classList.remove("hidden");
+                document.getElementById("officerInfo").innerText = `เจ้าหน้าที่: คุณ${authorizedUser.firstName} (${authorizedUser.employeeNo})`;
+            }
+
+            document.getElementById("btnRetry").onclick = () => location.reload();
+            document.addEventListener("DOMContentLoaded", startSSO);
+        })();
+    </script>
+</body>
+
+</html>
